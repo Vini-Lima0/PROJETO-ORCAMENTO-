@@ -10,6 +10,7 @@ import Clientes from './components/Clientes';
 import Produtos from './components/Produtos';
 import Agenda from './components/Agenda';
 import Tarefas from './components/Tarefas';
+import Configuracoes, { loadConfig } from './components/Configuracoes';
 
 interface User { email: string; role: 'admin' | 'operacional'; nome: string; }
 
@@ -104,6 +105,7 @@ export default function App() {
       case 'produtos': return <Produtos produtos={produtosFiltrados} onSalvar={p=>{setProdutos(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i>=0){const n=[...prev];n[i]=p;return n;}return[p,...prev];});}} onDelete={id=>setProdutos(p=>p.filter(x=>x.id!==id))} />;
       case 'agenda': return <Agenda eventos={eventos} onSalvar={e=>{setEventos(p=>{const i=p.findIndex(x=>x.id===e.id);if(i>=0){const n=[...p];n[i]=e;return n;}return[...p,e];});}} onDelete={id=>setEventos(p=>p.filter(e=>e.id!==id))} />;
       case 'tarefas': return <Tarefas tarefas={tarefas} onSalvar={t=>{setTarefas(p=>{const i=p.findIndex(x=>x.id===t.id);if(i>=0){const n=[...p];n[i]=t;return n;}return[t,...p];});}} onDelete={id=>setTarefas(p=>p.filter(t=>t.id!==id))} onToggle={id=>setTarefas(p=>p.map(t=>t.id===id?{...t,concluida:!t.concluida}:t))} />;
+      case 'configuracoes': return <Configuracoes />;
       default: return <div style={{padding:40,textAlign:'center',color:'var(--text3)'}}>Em desenvolvimento</div>;
     }
   };

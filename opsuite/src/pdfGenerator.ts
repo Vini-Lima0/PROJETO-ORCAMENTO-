@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Orcamento } from './types';
+import { ConfigEmpresa } from './components/Configuracoes';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -26,15 +27,20 @@ const statusColor: Record<string, [number, number, number]> = {
   rascunho: [106, 103, 96],
 };
 
-export function gerarPDF(orc: Orcamento, empresaNome = 'OpSuite Empresa') {
+const defaultConfig: ConfigEmpresa = { nome: 'OpSuite Empresa', email: '', telefone: '', endereco: '' };
+
+export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig) {
+  const { nome: empresaNome, email, telefone, endereco } = config;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = 210;
   const M = 18;
   let y = 0;
 
-  // Header block
+  // Header block — altura dinâmica conforme presença de info extra
+  const hasInfo = email || telefone || endereco;
+  const headerH = hasInfo ? 50 : 42;
   doc.setFillColor(24, 23, 20);
-  doc.rect(0, 0, W, 42, 'F');
+  doc.rect(0, 0, W, headerH, 'F');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
@@ -45,6 +51,12 @@ export function gerarPDF(orc: Orcamento, empresaNome = 'OpSuite Empresa') {
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(160, 157, 151);
   doc.text('ORÇAMENTO COMERCIAL', M, 25);
+
+  if (hasInfo) {
+    const infoParts = [email, telefone, endereco].filter(Boolean).join('  ·  ');
+    doc.setFontSize(8);
+    doc.text(infoParts, M, 33);
+  }
 
   // Numero e status
   const sc = statusColor[orc.status] || [106, 103, 96];
@@ -60,7 +72,7 @@ export function gerarPDF(orc: Orcamento, empresaNome = 'OpSuite Empresa') {
   doc.setTextColor(255, 255, 255);
   doc.text(`#${orc.numero}`, W - M, 28, { align: 'right' });
 
-  y = 52;
+  y = headerH + 10;
 
   // Info boxes
   const boxes = [
@@ -180,7 +192,8 @@ export function gerarPDF(orc: Orcamento, empresaNome = 'OpSuite Empresa') {
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7.5);
   doc.setTextColor(106, 103, 96);
-  doc.text(`${empresaNome} · Documento gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, M, pageH - 6);
+  const footerLeft = [empresaNome, endereco].filter(Boolean).join(' · ');
+  doc.text(`${footerLeft} · Gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, M, pageH - 6);
   doc.text('Orçamento não possui valor fiscal', W - M, pageH - 6, { align: 'right' });
 
   doc.save(`${orc.numero}.pdf`);
