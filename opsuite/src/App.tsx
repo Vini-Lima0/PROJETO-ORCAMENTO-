@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
 import { Section, Orcamento, Cliente, Produto, Tarefa, Evento, OrcamentoStatus } from './types';
-import { loadData, saveData, clientesIniciais, produtosIniciais, orcamentosIniciais, tarefasIniciais, eventosIniciais } from './data';
+import { loadData, saveData, calcularTotais, clientesIniciais, produtosIniciais, orcamentosIniciais, tarefasIniciais, eventosIniciais } from './data';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Orcamentos from './components/Orcamentos';
@@ -43,7 +43,9 @@ export default function App() {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
   const [busca, setBusca] = useState('');
 
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>(() => loadData('opsuite_orc', orcamentosIniciais));
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>(() =>
+    loadData('opsuite_orc', orcamentosIniciais).map(o => ({ ...o, ...calcularTotais(o) }))
+  );
   const [clientes, setClientes] = useState<Cliente[]>(() => loadData('opsuite_cli', clientesIniciais));
   const [produtos, setProdutos] = useState<Produto[]>(() => loadData('opsuite_prod', produtosIniciais));
   const [tarefas, setTarefas] = useState<Tarefa[]>(() => loadData('opsuite_tar', tarefasIniciais));
@@ -67,7 +69,8 @@ export default function App() {
   const navTo = (s: Section) => { setSection(s); setSidebarOpen(false); setBusca(''); };
 
   const saveOrc = (orc: Orcamento) => {
-    setOrcamentos(p => { const i=p.findIndex(x=>x.id===orc.id); if(i>=0){const n=[...p];n[i]=orc;return n;} return [orc,...p]; });
+    const orcComTotais = { ...orc, ...calcularTotais(orc) };
+    setOrcamentos(p => { const i=p.findIndex(x=>x.id===orcComTotais.id); if(i>=0){const n=[...p];n[i]=orcComTotais;return n;} return [orcComTotais,...p]; });
     navTo('orcamentos');
   };
 

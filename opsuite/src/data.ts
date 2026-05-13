@@ -90,6 +90,13 @@ export const eventosIniciais: Evento[] = [
   { id: 'e6', titulo: 'Desmontagem Eventos Prime', data: fmt(addDays(hoje, 3)), horaInicio: '07:00', horaFim: '11:00', tipo: 'entrega', descricao: '' },
 ];
 
+export function calcularTotais(orc: Pick<Orcamento, 'itens' | 'desconto' | 'impostos'>): { subtotal: number; total: number } {
+  const subtotal = orc.itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0);
+  const descontoVal = subtotal * orc.desconto / 100;
+  const impostosVal = (subtotal - descontoVal) * orc.impostos / 100;
+  return { subtotal, total: subtotal - descontoVal + impostosVal };
+}
+
 // localStorage helpers
 export function loadData<T>(key: string, defaults: T): T {
   try {
