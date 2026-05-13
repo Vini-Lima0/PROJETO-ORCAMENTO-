@@ -142,7 +142,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
         {/* Table header */}
         <div style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 1fr 0.8fr 36px',gap:8,padding:'8px 12px',background:'var(--surface2)',borderRadius:'9px 9px 0 0',fontSize:11,color:'var(--text3)',fontWeight:500,letterSpacing:'0.5px' }}>
-          <span>DESCRIÇÃO</span><span>QUANTIDADE</span><span>VL. UNITÁRIO</span><span>PERÍODO</span><span style={{textAlign:'right'}}>TOTAL</span><span></span>
+          <span>DESCRIÇÃO</span><span>QUANTIDADE</span><span>VL. UNITÁRIO</span><span>DETALHE DO ITEM</span><span style={{textAlign:'right'}}>TOTAL</span><span></span>
         </div>
         <div style={{ border:'1px solid var(--border)',borderTop:'none',borderRadius:'0 0 9px 9px',overflow:'hidden' }}>
           {itens.map((item, idx) => (
@@ -150,7 +150,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
               <input value={item.descricao} onChange={e=>updateItem(item.id,'descricao',e.target.value)} placeholder="Descrição do item..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
               <input type="number" value={item.quantidade} min={1} onChange={e=>updateItem(item.id,'quantidade',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
               <input type="number" value={item.valorUnitario} min={0} step={0.01} onChange={e=>updateItem(item.id,'valorUnitario',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
-              <input value={item.periodo||''} onChange={e=>updateItem(item.id,'periodo',e.target.value)} placeholder="ex: 3 dias" style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
+              <input value={item.periodo||''} onChange={e=>updateItem(item.id,'periodo',e.target.value)} placeholder="ex: Chuveiro, 3 dias..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
               <span style={{ fontSize:13,fontWeight:600,textAlign:'right',paddingRight:4,whiteSpace:'nowrap' }}>{fmtMoeda(item.quantidade*item.valorUnitario)}</span>
               <button onClick={()=>removeItem(item.id)} style={{ width:30,height:30,borderRadius:7,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text3)',fontSize:16,transition:'all .15s' }}
                 onMouseEnter={e=>{e.currentTarget.style.background='var(--red-bg)';e.currentTarget.style.color='var(--red)'}}
