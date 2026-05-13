@@ -3,6 +3,7 @@ import { Orcamento, LineItem, OrcamentoStatus, Cliente, Produto } from '../types
 import { Card, FormField, Input, Select, Textarea, Btn, StatusBadge, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
 import { format, addDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { v4 as uuid } from 'uuid';
 
 function newLine(): LineItem {
@@ -80,7 +81,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         <button onClick={onCancelar} style={{ width:36,height:36,borderRadius:10,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',fontSize:18 }}>←</button>
         <div>
           <div style={{ fontFamily:"'Syne',sans-serif",fontSize:18,fontWeight:700 }}>{isEdit ? 'Editar Orçamento' : 'Novo Orçamento'}</div>
-          <div style={{ fontSize:12,color:'var(--text2)' }}>#{isEdit ? orcamento!.numero : proximoNumero} · {format(hoje, "dd 'de' MMMM 'de' yyyy", {locale: require('date-fns/locale/pt-BR').ptBR})}</div>
+          <div style={{ fontSize:12,color:'var(--text2)' }}>#{isEdit ? orcamento!.numero : proximoNumero} · {format(hoje, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
         </div>
         <StatusBadge status={status} />
         <div style={{ marginLeft:'auto',display:'flex',gap:8,flexWrap:'wrap' }}>

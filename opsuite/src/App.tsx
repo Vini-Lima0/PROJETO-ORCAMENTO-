@@ -41,6 +41,7 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editOrc, setEditOrc] = useState<Orcamento | null>(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 900);
+  const [busca, setBusca] = useState('');
 
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>(() => loadData('opsuite_orc', orcamentosIniciais));
   const [clientes, setClientes] = useState<Cliente[]>(() => loadData('opsuite_cli', clientesIniciais));
@@ -63,7 +64,7 @@ export default function App() {
     const next = nums.length ? Math.max(...nums) + 1 : 1;
     return `ORÇ-${String(next).padStart(4, '0')}`;
   })();
-  const navTo = (s: Section) => { setSection(s); setSidebarOpen(false); };
+  const navTo = (s: Section) => { setSection(s); setSidebarOpen(false); setBusca(''); };
 
   const saveOrc = (orc: Orcamento) => {
     setOrcamentos(p => { const i=p.findIndex(x=>x.id===orc.id); if(i>=0){const n=[...p];n[i]=orc;return n;} return [orc,...p]; });
@@ -72,13 +73,32 @@ export default function App() {
 
   if (!user) return <Login onLogin={(email,role)=>setUser({email,role,nome:role==='admin'?'Admin Master':'Operacional'})} />;
 
+  const q = busca.toLowerCase().trim();
+  const orcamentosFiltrados = q ? orcamentos.filter(o =>
+    o.numero.toLowerCase().includes(q) ||
+    o.clienteNome.toLowerCase().includes(q) ||
+    o.contato.toLowerCase().includes(q) ||
+    o.status.toLowerCase().includes(q)
+  ) : orcamentos;
+  const clientesFiltrados = q ? clientes.filter(c =>
+    c.nome.toLowerCase().includes(q) ||
+    c.empresa.toLowerCase().includes(q) ||
+    c.email.toLowerCase().includes(q) ||
+    c.cnpj.includes(q)
+  ) : clientes;
+  const produtosFiltrados = q ? produtos.filter(p =>
+    p.nome.toLowerCase().includes(q) ||
+    p.categoria.toLowerCase().includes(q) ||
+    p.unidade.toLowerCase().includes(q)
+  ) : produtos;
+
   const renderContent = () => {
     switch(section) {
       case 'dashboard': return <Dashboard orcamentos={orcamentos} onVerOrcamentos={()=>navTo('orcamentos')} onEditar={o=>{setEditOrc(o);navTo('novo-orcamento');}} />;
-      case 'orcamentos': return <Orcamentos orcamentos={orcamentos} onNovo={()=>{setEditOrc(null);navTo('novo-orcamento');}} onEditar={o=>{setEditOrc(o);navTo('novo-orcamento');}} onDelete={id=>setOrcamentos(p=>p.filter(o=>o.id!==id))} onStatusChange={(id,status)=>setOrcamentos(p=>p.map(o=>o.id===id?{...o,status}:o))} />;
+      case 'orcamentos': return <Orcamentos orcamentos={orcamentosFiltrados} onNovo={()=>{setEditOrc(null);navTo('novo-orcamento');}} onEditar={o=>{setEditOrc(o);navTo('novo-orcamento');}} onDelete={id=>setOrcamentos(p=>p.filter(o=>o.id!==id))} onStatusChange={(id,status)=>setOrcamentos(p=>p.map(o=>o.id===id?{...o,status}:o))} />;
       case 'novo-orcamento': return <NovoOrcamento orcamento={editOrc} clientes={clientes} produtos={produtos} proximoNumero={proximoNumero} onSalvar={saveOrc} onCancelar={()=>navTo('orcamentos')} />;
-      case 'clientes': return <Clientes clientes={clientes} onSalvar={c=>{setClientes(p=>{const i=p.findIndex(x=>x.id===c.id);if(i>=0){const n=[...p];n[i]=c;return n;}return[c,...p];});}} onDelete={id=>setClientes(p=>p.filter(c=>c.id!==id))} />;
-      case 'produtos': return <Produtos produtos={produtos} onSalvar={p=>{setProdutos(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i>=0){const n=[...prev];n[i]=p;return n;}return[p,...prev];});}} onDelete={id=>setProdutos(p=>p.filter(x=>x.id!==id))} />;
+      case 'clientes': return <Clientes clientes={clientesFiltrados} onSalvar={c=>{setClientes(p=>{const i=p.findIndex(x=>x.id===c.id);if(i>=0){const n=[...p];n[i]=c;return n;}return[c,...p];});}} onDelete={id=>setClientes(p=>p.filter(c=>c.id!==id))} />;
+      case 'produtos': return <Produtos produtos={produtosFiltrados} onSalvar={p=>{setProdutos(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i>=0){const n=[...prev];n[i]=p;return n;}return[p,...prev];});}} onDelete={id=>setProdutos(p=>p.filter(x=>x.id!==id))} />;
       case 'agenda': return <Agenda eventos={eventos} onSalvar={e=>{setEventos(p=>{const i=p.findIndex(x=>x.id===e.id);if(i>=0){const n=[...p];n[i]=e;return n;}return[...p,e];});}} onDelete={id=>setEventos(p=>p.filter(e=>e.id!==id))} />;
       case 'tarefas': return <Tarefas tarefas={tarefas} onSalvar={t=>{setTarefas(p=>{const i=p.findIndex(x=>x.id===t.id);if(i>=0){const n=[...p];n[i]=t;return n;}return[t,...p];});}} onDelete={id=>setTarefas(p=>p.filter(t=>t.id!==id))} onToggle={id=>setTarefas(p=>p.map(t=>t.id===id?{...t,concluida:!t.concluida}:t))} />;
       default: return <div style={{padding:40,textAlign:'center',color:'var(--text3)'}}>Em desenvolvimento</div>;
@@ -142,9 +162,9 @@ export default function App() {
               <div style={{fontFamily:"'Syne',sans-serif",fontSize:22,fontWeight:800,letterSpacing:'-0.5px'}}>{pageTitles[section]}</div>
               <div style={{fontSize:13,color:'var(--text2)',marginTop:2}}>
                 {section==='dashboard'&&new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
-                {section==='orcamentos'&&`${orcamentos.length} orçamentos no total`}
-                {section==='clientes'&&`${clientes.length} clientes cadastrados`}
-                {section==='produtos'&&`${produtos.length} itens no catálogo`}
+                {section==='orcamentos'&&(q ? `${orcamentosFiltrados.length} resultado(s) para "${busca}"` : `${orcamentos.length} orçamentos no total`)}
+                {section==='clientes'&&(q ? `${clientesFiltrados.length} resultado(s) para "${busca}"` : `${clientes.length} clientes cadastrados`)}
+                {section==='produtos'&&(q ? `${produtosFiltrados.length} resultado(s) para "${busca}"` : `${produtos.length} itens no catálogo`)}
                 {section==='agenda'&&'Agenda da semana'}
                 {section==='tarefas'&&`${tarefas.filter(t=>!t.concluida).length} tarefas pendentes`}
                 {(section==='novo-orcamento')&&(editOrc?`Editando #${editOrc.numero}`:`Novo #${proximoNumero}`)}
@@ -155,7 +175,15 @@ export default function App() {
             {!isMobile && (
               <div style={{display:'flex',alignItems:'center',gap:8,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 12px'}}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input placeholder="Buscar..." style={{border:'none',outline:'none',fontSize:13,fontFamily:"'DM Sans',sans-serif",color:'var(--text)',background:'transparent',width:180}} />
+                <input
+                  placeholder={`Buscar em ${pageTitles[section].toLowerCase()}...`}
+                  value={busca}
+                  onChange={e => setBusca(e.target.value)}
+                  style={{border:'none',outline:'none',fontSize:13,fontFamily:"'DM Sans',sans-serif",color:'var(--text)',background:'transparent',width:180}}
+                />
+                {busca && (
+                  <button onClick={() => setBusca('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:16,lineHeight:1,padding:0}}>×</button>
+                )}
               </div>
             )}
             <div style={{width:36,height:36,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',fontSize:16}}>
