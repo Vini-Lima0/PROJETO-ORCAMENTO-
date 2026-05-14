@@ -8,6 +8,7 @@ import { v4 as uuid } from 'uuid';
 
 interface Props {
   vendas: Venda[];
+  userRole: 'admin' | 'operacional';
   onSalvar: (v: Venda) => void;
   onDelete: (id: string) => void;
   onVerOS: (vendaId: string) => void;
@@ -30,7 +31,8 @@ function badgeSituacao(s: SituacaoVenda) {
 
 const hoje = () => format(new Date(), 'yyyy-MM-dd');
 
-export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
+export default function Vendas({ vendas, userRole, onSalvar, onDelete, onVerOS }: Props) {
+  const isAdmin = userRole === 'admin';
   const [filtro, setFiltro] = useState<SituacaoVenda | 'todos'>('todos');
   const [busca, setBusca] = useState('');
   const [detalheId, setDetalheId] = useState<string | null>(null);
@@ -190,53 +192,51 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
       </div>
 
       {/* Menu de ações */}
-      {menuOpen && (
-        <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(null)} />
-          <div style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, zIndex: 50, minWidth: 200, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
-            <button onClick={() => { setDetalheId(menuOpen); setMenuOpen(null); }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              💰 Gerenciar pagamentos
-            </button>
-            <button onClick={() => {
-              const v = vendas.find(x => x.id === menuOpen);
-              if (v) { setEditForm({ contato: v.contato, observacoes: v.observacoes }); setEditVendaId(menuOpen); }
-              setMenuOpen(null);
-            }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              ✏️ Editar venda
-            </button>
-            <button onClick={() => { onVerOS(menuOpen); setMenuOpen(null); }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--text)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              🔧 Ver Ordem de Serviço
-            </button>
-            <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-            <button onClick={() => {
-              const v = vendas.find(x => x.id === menuOpen);
-              if (v && v.situacao !== 'cancelado') { onSalvar({ ...v, situacao: 'cancelado' }); }
-              setMenuOpen(null);
-            }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--amber)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--amber-bg, rgba(245,158,11,0.08))')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              🚫 Cancelar venda
-            </button>
-            <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-            <button onClick={() => { setConfirmDelete(menuOpen); setMenuOpen(null); }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--red)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'var(--red-bg, rgba(239,68,68,0.08))')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              🗑️ Excluir venda
-            </button>
-          </div>
-        </>
-      )}
+      {menuOpen && (() => {
+        const vMenu = vendas.find(x => x.id === menuOpen);
+        const podeEditar = isAdmin || vMenu?.editavel;
+        const menuBtn = (onClick: () => void, label: string, color?: string, disabled?: boolean): React.ReactNode => (
+          <button onClick={disabled ? undefined : onClick}
+            style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: disabled ? 'default' : 'pointer', fontSize: 13, borderRadius: 7, color: disabled ? 'var(--text3)' : (color || 'var(--text)'), opacity: disabled ? 0.6 : 1 }}
+            onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'var(--surface2)'; }}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+            {label}
+          </button>
+        );
+        return (
+          <>
+            <div style={{ position: 'fixed', inset: 0, zIndex: 40 }} onClick={() => setMenuOpen(null)} />
+            <div style={{ position: 'fixed', top: menuPos.top, right: menuPos.right, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: 4, zIndex: 50, minWidth: 210, boxShadow: '0 4px 20px rgba(0,0,0,0.12)' }}>
+              {menuBtn(() => { setDetalheId(menuOpen); setMenuOpen(null); }, '📋 Ver detalhes / pagamentos')}
+              {menuBtn(() => {
+                if (!podeEditar) return;
+                const v = vendas.find(x => x.id === menuOpen);
+                if (v) { setEditForm({ contato: v.contato, observacoes: v.observacoes }); setEditVendaId(menuOpen); }
+                setMenuOpen(null);
+              }, podeEditar ? '✏️ Editar venda' : '🔒 Editar venda (bloqueado)', undefined, !podeEditar)}
+              {menuBtn(() => { onVerOS(menuOpen); setMenuOpen(null); }, '🔧 Ver Ordem de Serviço')}
+              {isAdmin && (
+                <>
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                  {menuBtn(() => {
+                    const v = vendas.find(x => x.id === menuOpen);
+                    if (v) onSalvar({ ...v, editavel: !v.editavel });
+                    setMenuOpen(null);
+                  }, vMenu?.editavel ? '🔒 Bloquear edição' : '🔓 Liberar edição para operacional')}
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                  {menuBtn(() => {
+                    const v = vendas.find(x => x.id === menuOpen);
+                    if (v && v.situacao !== 'cancelado') onSalvar({ ...v, situacao: 'cancelado' });
+                    setMenuOpen(null);
+                  }, '🚫 Cancelar venda', 'var(--amber)')}
+                  <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                  {menuBtn(() => { setConfirmDelete(menuOpen); setMenuOpen(null); }, '🗑️ Excluir venda', 'var(--red)')}
+                </>
+              )}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Modal de detalhe / pagamentos */}
       {detalhe && (
@@ -283,10 +283,12 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text3)', letterSpacing: '0.8px' }}>PAGAMENTOS</div>
-                  <button onClick={() => { setShowAddPag(true); setEditPag({ vencimento: hoje() }); }}
-                    style={{ padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: 12, fontFamily: "'Inter',sans-serif", color: 'var(--text)' }}>
-                    + Adicionar
-                  </button>
+                  {isAdmin && (
+                    <button onClick={() => { setShowAddPag(true); setEditPag({ vencimento: hoje() }); }}
+                      style={{ padding: '5px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: 12, fontFamily: "'Inter',sans-serif", color: 'var(--text)' }}>
+                      + Adicionar
+                    </button>
+                  )}
                 </div>
 
                 {/* Formulário de novo pagamento */}
@@ -325,8 +327,8 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {detalhe.pagamentos.map(pag => (
                       <div key={pag.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: pag.pago ? 'rgba(16,185,129,0.05)' : 'var(--bg)', borderRadius: 10, border: `1px solid ${pag.pago ? 'rgba(16,185,129,0.2)' : 'var(--border)'}` }}>
-                        <button onClick={() => togglePago(detalhe, pag.id)}
-                          style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${pag.pago ? 'var(--green)' : 'var(--border)'}`, background: pag.pago ? 'var(--green)' : 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <button onClick={() => isAdmin && togglePago(detalhe, pag.id)}
+                          style={{ width: 22, height: 22, borderRadius: 6, border: `2px solid ${pag.pago ? 'var(--green)' : 'var(--border)'}`, background: pag.pago ? 'var(--green)' : 'transparent', cursor: isAdmin ? 'pointer' : 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                           {pag.pago && <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                         </button>
                         <div style={{ flex: 1 }}>
@@ -337,8 +339,10 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
                           </div>
                         </div>
                         <div style={{ fontSize: 14, fontWeight: 700, color: pag.pago ? 'var(--green)' : 'var(--text)', whiteSpace: 'nowrap' }}>{fmtMoeda(pag.valor)}</div>
-                        <button onClick={() => removerPagamento(pag.id)}
-                          style={{ width: 26, height: 26, borderRadius: 7, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                        {isAdmin && (
+                          <button onClick={() => removerPagamento(pag.id)}
+                            style={{ width: 26, height: 26, borderRadius: 7, border: '1px solid var(--border)', background: 'none', cursor: 'pointer', color: 'var(--text3)', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+                        )}
                       </div>
                     ))}
                     {/* Resumo financeiro */}

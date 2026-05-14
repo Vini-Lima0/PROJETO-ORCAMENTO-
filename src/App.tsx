@@ -239,6 +239,7 @@ export default function App() {
       case 'vendas':
         return <Vendas
           vendas={vendas}
+          userRole={user.role}
           onSalvar={v => setVendas(p => { const i = p.findIndex(x => x.id === v.id); if (i >= 0) { const n = [...p]; n[i] = v; return n; } return [v, ...p]; })}
           onDelete={id => {
             const venda = vendas.find(v => v.id === id);

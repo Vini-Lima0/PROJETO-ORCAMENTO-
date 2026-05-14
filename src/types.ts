@@ -106,6 +106,7 @@ export interface Venda {
   criadoEm: string;
   situacao: SituacaoVenda;
   pagamentos: PagamentoVenda[];
+  editavel?: boolean;
 }
 
 export type OSStatus = 'pendente' | 'em_andamento' | 'concluida' | 'cancelada';
