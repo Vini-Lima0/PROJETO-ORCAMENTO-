@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Orcamento, LineItem, OrcamentoStatus, Cliente, Produto } from '../types';
 import { Card, FormField, Input, Select, Textarea, Btn, StatusBadge, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
@@ -6,6 +6,58 @@ import { loadConfig } from './Configuracoes';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { v4 as uuid } from 'uuid';
+
+function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v: number) => void; style?: React.CSSProperties }) {
+  const [focused, setFocused] = useState(false);
+  const [raw, setRaw] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const display = focused
+    ? raw
+    : value === 0 ? '' : fmtMoeda(value);
+
+  const handleFocus = () => {
+    const cents = Math.round(value * 100);
+    setRaw(cents === 0 ? '' : String(cents));
+    setFocused(true);
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '');
+    setRaw(digits);
+    const cents = parseInt(digits || '0', 10);
+    onChange(cents / 100);
+  };
+
+  const handleBlur = () => {
+    setFocused(false);
+    setRaw('');
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      value={display}
+      onChange={handleChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      placeholder="R$ 0,00"
+      inputMode="numeric"
+      style={{
+        padding: '7px 10px',
+        border: '1px solid var(--border)',
+        borderRadius: 8,
+        fontSize: 13,
+        fontFamily: "'Inter',sans-serif",
+        outline: 'none',
+        color: 'var(--text)',
+        background: 'var(--surface)',
+        width: '100%',
+        ...style,
+      }}
+    />
+  );
+}
 
 function newLine(): LineItem {
   return { id: uuid(), descricao: '', quantidade: 1, valorUnitario: 0, periodo: '' };
@@ -145,7 +197,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
             <div key={item.id} style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 0.8fr 0.8fr 36px',gap:8,padding:'8px 12px',borderBottom: idx < itens.length-1 ? '1px solid var(--border)' : 'none',alignItems:'center' }}>
               <input value={item.descricao} onChange={e=>updateItem(item.id,'descricao',e.target.value)} placeholder="Descrição do item..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
               <input type="number" value={item.quantidade} min={1} onChange={e=>updateItem(item.id,'quantidade',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
-              <input type="number" value={item.valorUnitario} min={0} step={0.01} onChange={e=>updateItem(item.id,'valorUnitario',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
+              <CurrencyInput value={item.valorUnitario} onChange={v=>updateItem(item.id,'valorUnitario',v)} />
               <input value={item.periodo||''} onChange={e=>updateItem(item.id,'periodo',e.target.value)} placeholder="ex: Chuveiro, 3 dias..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
               <span style={{ fontSize:13,fontWeight:600,textAlign:'right',paddingRight:4,whiteSpace:'nowrap' }}>{fmtMoeda(item.quantidade*item.valorUnitario)}</span>
               <button onClick={()=>removeItem(item.id)} style={{ width:30,height:30,borderRadius:7,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text3)',fontSize:16,transition:'all .15s' }}
@@ -175,7 +227,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10 }}>
             <span style={{fontSize:13.5,color:'var(--text2)'}}>Desconto</span>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <input type="number" value={desconto} min={0} max={100} onChange={e=>setDesconto(parseFloat(e.target.value)||0)} style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
+              <input inputMode="decimal" value={desconto === 0 ? '' : String(desconto)} onChange={e=>{const v=e.target.value.replace(',','.');setDesconto(parseFloat(v)||0)}} placeholder="0" style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
               <span style={{fontSize:12,color:'var(--text3)'}}>%</span>
               <span style={{fontSize:13,color:'var(--text)',fontWeight:500,minWidth:80,textAlign:'right'}}>- {fmtMoeda(descontoVal)}</span>
             </div>
@@ -183,7 +235,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10 }}>
             <span style={{fontSize:13.5,color:'var(--text2)'}}>Impostos</span>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <input type="number" value={impostos} min={0} max={100} onChange={e=>setImpostos(parseFloat(e.target.value)||0)} style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
+              <input inputMode="decimal" value={impostos === 0 ? '' : String(impostos)} onChange={e=>{const v=e.target.value.replace(',','.');setImpostos(parseFloat(v)||0)}} placeholder="0" style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
               <span style={{fontSize:12,color:'var(--text3)'}}>%</span>
               <span style={{fontSize:13,color:'var(--text)',fontWeight:500,minWidth:80,textAlign:'right'}}>+ {fmtMoeda(impostosVal)}</span>
             </div>
