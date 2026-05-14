@@ -227,7 +227,7 @@ export default function App() {
       case 'dashboard':
         return <Dashboard orcamentos={orcamentos} onVerOrcamentos={() => navTo('orcamentos')} onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }} />;
       case 'orcamentos':
-        return <Orcamentos orcamentos={orcamentosFiltrados} clientes={clientes} onNovo={() => { setEditOrc(null); navTo('novo-orcamento'); }} onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }} onDelete={id => setOrcamentos(p => p.filter(o => o.id !== id))} onStatusChange={handleStatusChange} onDuplicar={duplicarOrc} />;
+        return <Orcamentos orcamentos={orcamentosFiltrados} clientes={clientes} vendas={vendas} onNovo={() => { setEditOrc(null); navTo('novo-orcamento'); }} onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }} onDelete={id => setOrcamentos(p => p.filter(o => o.id !== id))} onStatusChange={handleStatusChange} onDuplicar={duplicarOrc} />;
       case 'novo-orcamento':
         return <NovoOrcamento orcamento={editOrc} clientes={clientes} produtos={produtos} proximoNumero={proximoNumero} onSalvar={saveOrc} onCancelar={() => navTo('orcamentos')} onSalvarCliente={c => setClientes(p => { const i = p.findIndex(x => x.id === c.id); if (i >= 0) { const n = [...p]; n[i] = c; return n; } return [c, ...p]; })} />;
       case 'clientes':
@@ -335,7 +335,9 @@ export default function App() {
               </div>
             )}
             <div style={{ width: 36, height: 36, borderRadius: 9, border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', fontSize: 16 }}>🔔</div>
-            <button onClick={() => { setEditOrc(null); navTo('novo-orcamento'); }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 10, background: 'var(--text)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' }}>+ Novo orçamento</button>
+            {section !== 'vendas' && section !== 'ordens-servico' && (
+              <button onClick={() => { setEditOrc(null); navTo('novo-orcamento'); }} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 16px', borderRadius: 10, background: 'var(--text)', color: '#fff', border: 'none', cursor: 'pointer', fontSize: 13.5, fontWeight: 500, fontFamily: "'Inter',sans-serif", whiteSpace: 'nowrap' }}>+ Novo orçamento</button>
+            )}
           </div>
         </div>
         {renderContent()}

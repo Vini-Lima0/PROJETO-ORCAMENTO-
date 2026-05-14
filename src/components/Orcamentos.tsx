@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Orcamento, OrcamentoStatus, Cliente } from '../types';
+import { Orcamento, OrcamentoStatus, Cliente, Venda } from '../types';
 import { StatusBadge, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
@@ -8,6 +8,7 @@ import { ptBR } from 'date-fns/locale';
 interface Props {
   orcamentos: Orcamento[];
   clientes: Cliente[];
+  vendas: Venda[];
   onNovo: () => void;
   onEditar: (o: Orcamento) => void;
   onDelete: (id: string) => void;
@@ -19,7 +20,7 @@ type FiltroCard = 'todos' | 'previstos' | 'aprovado' | 'recusado';
 
 const isPrevistos = (s: OrcamentoStatus) => s === 'aguardando' || s === 'enviado' || s === 'rascunho';
 
-export default function Orcamentos({ orcamentos, clientes, onNovo, onEditar, onDelete, onStatusChange, onDuplicar }: Props) {
+export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEditar, onDelete, onStatusChange, onDuplicar }: Props) {
   const [periodo, setPeriodo] = useState(startOfMonth(new Date()));
   const [busca, setBusca] = useState('');
   const [filtroCard, setFiltroCard] = useState<FiltroCard>('todos');
@@ -162,7 +163,12 @@ export default function Orcamentos({ orcamentos, clientes, onNovo, onEditar, onD
                       {fmtMoeda(o.total)}
                     </td>
                     <td style={{ padding:'12px 16px',cursor:'pointer' }} onClick={()=>onEditar(o)}>
-                      <StatusBadge status={o.status} />
+                      <div style={{ display:'flex',alignItems:'center',gap:7 }}>
+                        <StatusBadge status={o.status} />
+                        {vendas.some(v => v.orcamentoId === o.id) && (
+                          <span title="Venda gerada" style={{ fontSize:11,fontWeight:600,color:'var(--green)',background:'var(--green-bg)',padding:'2px 7px',borderRadius:20 }}>💰 Venda</span>
+                        )}
+                      </div>
                     </td>
                     <td style={{ padding:'12px 16px' }}>
                       <button onClick={()=>gerarPDF(o, undefined, clientes.find(c=>c.id===o.clienteId))}

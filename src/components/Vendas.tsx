@@ -205,6 +205,17 @@ export default function Vendas({ vendas, onSalvar, onDelete, onVerOS }: Props) {
               🔧 Ver Ordem de Serviço
             </button>
             <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+            <button onClick={() => {
+              const v = vendas.find(x => x.id === menuOpen);
+              if (v && v.situacao !== 'cancelado') { onSalvar({ ...v, situacao: 'cancelado' }); }
+              setMenuOpen(null);
+            }}
+              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--amber)' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--amber-bg, rgba(245,158,11,0.08))')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+              🚫 Cancelar venda
+            </button>
+            <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
             <button onClick={() => { setConfirmDelete(menuOpen); setMenuOpen(null); }}
               style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--red)' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--red-bg, rgba(239,68,68,0.08))')}
