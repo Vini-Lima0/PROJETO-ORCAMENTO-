@@ -10,7 +10,7 @@ import Clientes from './components/Clientes';
 import Produtos from './components/Produtos';
 import Agenda from './components/Agenda';
 import Tarefas from './components/Tarefas';
-import Configuracoes, { loadConfig } from './components/Configuracoes';
+import Configuracoes from './components/Configuracoes';
 
 interface User { email: string; role: 'admin' | 'operacional'; nome: string; }
 

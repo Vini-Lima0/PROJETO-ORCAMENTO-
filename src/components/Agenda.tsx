@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Evento } from '../types';
-import { Card, Btn, FormField, Input, Select, Textarea, Modal } from './ui';
+import { Btn, FormField, Input, Select, Textarea, Modal } from './ui';
 import { format, addDays, startOfWeek, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { v4 as uuid } from 'uuid';

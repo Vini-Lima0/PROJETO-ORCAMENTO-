@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Cliente } from '../types';
-import { Card, Avatar, Btn, FormField, Input, Modal, fmtMoeda } from './ui';
+import { Card, Avatar, Btn, FormField, Input, Modal } from './ui';
 import { v4 as uuid } from 'uuid';
 import { format } from 'date-fns';
 
