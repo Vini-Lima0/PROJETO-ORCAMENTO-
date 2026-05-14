@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Orcamento } from './types';
+import { Orcamento, Cliente } from './types';
 import { ConfigEmpresa } from './components/Configuracoes';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -16,7 +16,7 @@ const defaultConfig: ConfigEmpresa = {
   email: '', telefone: '', endereco: '', logo: '',
 };
 
-export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig) {
+export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, cliente?: Cliente) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const W = 210;
   const M = 13;
@@ -125,10 +125,10 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig) 
   y += 5;
 
   const clientTop = y;
-  const clientH = 24;
-  const validColW = 44;
+  const validColW = 46;
   const sepX = W - M - validColW;
 
+  // --- dados do cliente (lado esquerdo) ---
   const clientName = orc.clienteNome?.trim() || 'CONSUMIDOR';
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
@@ -138,8 +138,20 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig) 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(...C.mid);
-  if (orc.contato) doc.text(orc.contato, M, y + 12);
 
+  const clientLines: string[] = [];
+  if (orc.contato && orc.contato !== clientName) clientLines.push(orc.contato);
+  if (cliente?.empresa)  clientLines.push(cliente.empresa);
+  if (cliente?.cnpj)     clientLines.push(cliente.cnpj);
+  if (cliente?.email)    clientLines.push(cliente.email);
+  if (cliente?.telefone) clientLines.push(cliente.telefone);
+  if (cliente?.endereco) clientLines.push(cliente.endereco);
+
+  clientLines.forEach((l, i) => doc.text(l, M, y + 13 + i * 5));
+
+  const clientH = Math.max(24, 18 + clientLines.length * 5);
+
+  // --- separador vertical e validade (lado direito) ---
   doc.setDrawColor(...C.line);
   doc.setLineWidth(0.3);
   doc.line(sepX, clientTop, sepX, clientTop + clientH);

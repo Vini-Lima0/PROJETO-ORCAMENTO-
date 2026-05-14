@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Orcamento, OrcamentoStatus } from '../types';
+import { Orcamento, OrcamentoStatus, Cliente } from '../types';
 import { Card, StatusBadge, Btn, Tabs, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
 import { format } from 'date-fns';
@@ -18,13 +18,14 @@ const months = ['Todos os meses','Janeiro','Fevereiro','Março','Abril','Maio','
 
 interface Props {
   orcamentos: Orcamento[];
+  clientes: Cliente[];
   onNovo: () => void;
   onEditar: (o: Orcamento) => void;
   onDelete: (id: string) => void;
   onStatusChange: (id: string, status: OrcamentoStatus) => void;
 }
 
-export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onStatusChange }: Props) {
+export default function Orcamentos({ orcamentos, clientes, onNovo, onEditar, onDelete, onStatusChange }: Props) {
   const [tab, setTab] = useState('todos');
   const [busca, setBusca] = useState('');
   const [mes, setMes] = useState('0');
@@ -100,7 +101,7 @@ export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onS
                     <td style={{ padding:'11px 14px' }}><StatusBadge status={o.status} /></td>
                     <td style={{ padding:'11px 14px' }}>
                       <div style={{ display:'flex',gap:6,position:'relative' }}>
-                        <button onClick={()=>gerarPDF(o)} title="Gerar PDF" style={{ width:30,height:30,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
+                        <button onClick={()=>gerarPDF(o, undefined, clientes.find(c=>c.id===o.clienteId))} title="Gerar PDF" style={{ width:30,height:30,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
                         </button>
                         <div>
