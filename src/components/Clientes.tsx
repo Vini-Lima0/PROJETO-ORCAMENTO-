@@ -11,7 +11,7 @@ interface Props {
 }
 
 const empty = (): Cliente => ({
-  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', endereco: '',
+  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', cpf: '', endereco: '',
   criadoEm: format(new Date(), 'yyyy-MM-dd'),
 });
 
