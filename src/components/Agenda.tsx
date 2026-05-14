@@ -9,6 +9,7 @@ interface Props {
   eventos: Evento[];
   onSalvar: (e: Evento) => void;
   onDelete: (id: string) => void;
+  onToggle: (id: string) => void;
 }
 
 const tipoConfig = {
@@ -19,15 +20,24 @@ const tipoConfig = {
 };
 
 const empty = (): Evento => ({
-  id: '', titulo: '', data: format(new Date(),'yyyy-MM-dd'), horaInicio: '09:00', horaFim: '10:00', tipo: 'evento', descricao: '',
+  id: '', titulo: '', data: format(new Date(),'yyyy-MM-dd'), horaInicio: '09:00', horaFim: '10:00', tipo: 'evento', descricao: '', concluido: false,
 });
 
-export default function Agenda({ eventos, onSalvar, onDelete }: Props) {
+type Filtro = 'todos' | 'pendentes' | 'concluidos';
+
+export default function Agenda({ eventos, onSalvar, onDelete, onToggle }: Props) {
   const [semana, setSemana] = useState(startOfWeek(new Date(), { weekStartsOn: 0 }));
   const [modal, setModal] = useState(false);
   const [form, setForm] = useState<Evento>(empty());
+  const [filtro, setFiltro] = useState<Filtro>('todos');
 
   const dias = Array.from({ length: 7 }, (_, i) => addDays(semana, i));
+
+  const eventosFiltrados = filtro === 'pendentes'
+    ? eventos.filter(e => !e.concluido)
+    : filtro === 'concluidos'
+    ? eventos.filter(e => e.concluido)
+    : eventos;
 
   const abrirNovo = (data?: string) => {
     setForm({ ...empty(), data: data || format(new Date(),'yyyy-MM-dd') });
@@ -39,6 +49,22 @@ export default function Agenda({ eventos, onSalvar, onDelete }: Props) {
     onSalvar({ ...form, id: form.id || uuid() });
     setModal(false);
   };
+
+  const totalPendentes = eventos.filter(e => !e.concluido).length;
+  const totalConcluidos = eventos.filter(e => e.concluido).length;
+
+  const tabStyle = (t: Filtro): React.CSSProperties => ({
+    padding: '7px 16px',
+    borderRadius: 8,
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: 13,
+    fontFamily: "'Inter',sans-serif",
+    fontWeight: filtro === t ? 600 : 400,
+    background: filtro === t ? 'var(--text)' : 'var(--surface)',
+    color: filtro === t ? '#fff' : 'var(--text2)',
+    transition: 'all .15s',
+  });
 
   return (
     <div>
@@ -54,10 +80,23 @@ export default function Agenda({ eventos, onSalvar, onDelete }: Props) {
         <Btn variant="primary" icon={<span>+</span>} onClick={()=>abrirNovo()}>Novo evento</Btn>
       </div>
 
+      {/* Filtros */}
+      <div style={{ display:'flex',gap:6,marginBottom:20,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:6,width:'fit-content' }}>
+        <button style={tabStyle('todos')} onClick={()=>setFiltro('todos')}>
+          Todos ({eventos.length})
+        </button>
+        <button style={tabStyle('pendentes')} onClick={()=>setFiltro('pendentes')}>
+          Não concluídos ({totalPendentes})
+        </button>
+        <button style={tabStyle('concluidos')} onClick={()=>setFiltro('concluidos')}>
+          Concluídos ({totalConcluidos})
+        </button>
+      </div>
+
       <div style={{ display:'flex',flexDirection:'column',gap:12 }}>
         {dias.map(dia => {
           const diaStr = format(dia, 'yyyy-MM-dd');
-          const evDia = eventos.filter(e => e.data === diaStr);
+          const evDia = eventosFiltrados.filter(e => e.data === diaStr);
           const isHoje = isSameDay(dia, new Date());
 
           return (
@@ -73,34 +112,45 @@ export default function Agenda({ eventos, onSalvar, onDelete }: Props) {
               </div>
               <div style={{ flex:1 }}>
                 {evDia.length === 0 ? (
-                  <div
-                    onClick={()=>abrirNovo(diaStr)}
-                    style={{ height:40,border:'1.5px dashed var(--border)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text3)',fontSize:13,transition:'all .15s' }}
-                    onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--border2)';e.currentTarget.style.background='var(--surface2)'}}
-                    onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='transparent'}}
-                  >+ Adicionar evento</div>
+                  filtro === 'todos' ? (
+                    <div
+                      onClick={()=>abrirNovo(diaStr)}
+                      style={{ height:40,border:'1.5px dashed var(--border)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text3)',fontSize:13,transition:'all .15s' }}
+                      onMouseEnter={e=>{e.currentTarget.style.borderColor='var(--border2)';e.currentTarget.style.background='var(--surface2)'}}
+                      onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.background='transparent'}}
+                    >+ Adicionar evento</div>
+                  ) : null
                 ) : (
                   <div style={{ display:'flex',flexDirection:'column',gap:6 }}>
                     {evDia.map(ev => {
                       const cfg = tipoConfig[ev.tipo] || tipoConfig.outro;
                       return (
                         <div key={ev.id}
-                          onClick={()=>{setForm({...ev});setModal(true);}}
-                          style={{ padding:'10px 14px',borderRadius:9,background:cfg.bg,borderLeft:`3px solid ${cfg.border}`,cursor:'pointer',transition:'opacity .15s' }}
-                          onMouseEnter={e=>(e.currentTarget.style.opacity='0.8')}
-                          onMouseLeave={e=>(e.currentTarget.style.opacity='1')}
+                          style={{ padding:'10px 14px',borderRadius:9,background:ev.concluido?'var(--surface2)':cfg.bg,borderLeft:`3px solid ${ev.concluido?'var(--border2)':cfg.border}`,display:'flex',alignItems:'center',gap:10,transition:'opacity .15s',opacity:ev.concluido?0.7:1 }}
                         >
-                          <div style={{ fontSize:13.5,fontWeight:500,color:'var(--text)',marginBottom:2 }}>{ev.titulo}</div>
-                          <div style={{ fontSize:12,color:'var(--text2)',display:'flex',alignItems:'center',gap:6 }}>
-                            <span>🕐 {ev.horaInicio} – {ev.horaFim}</span>
-                            <span style={{ padding:'1px 7px',borderRadius:20,background:cfg.bg,color:cfg.text,fontSize:11,fontWeight:500 }}>{cfg.label}</span>
+                          {/* Botão de concluir */}
+                          <button
+                            onClick={e=>{e.stopPropagation();onToggle(ev.id);}}
+                            title={ev.concluido?'Marcar como pendente':'Marcar como concluído'}
+                            style={{ width:22,height:22,borderRadius:'50%',border:`2px solid ${ev.concluido?'var(--green)':'var(--border2)'}`,background:ev.concluido?'var(--green)':'transparent',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,transition:'all .15s',fontSize:11,color:'#fff',fontWeight:700 }}>
+                            {ev.concluido ? '✓' : ''}
+                          </button>
+                          {/* Conteúdo */}
+                          <div style={{ flex:1,cursor:'pointer' }} onClick={()=>{setForm({...ev});setModal(true);}}>
+                            <div style={{ fontSize:13.5,fontWeight:500,color:'var(--text)',marginBottom:2,textDecoration:ev.concluido?'line-through':'none' }}>{ev.titulo}</div>
+                            <div style={{ fontSize:12,color:'var(--text2)',display:'flex',alignItems:'center',gap:6 }}>
+                              <span>🕐 {ev.horaInicio} – {ev.horaFim}</span>
+                              <span style={{ padding:'1px 7px',borderRadius:20,background:cfg.bg,color:cfg.text,fontSize:11,fontWeight:500 }}>{cfg.label}</span>
+                            </div>
                           </div>
                         </div>
                       );
                     })}
-                    <div onClick={()=>abrirNovo(diaStr)} style={{ height:30,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text3)',fontSize:12 }}>
-                      + evento
-                    </div>
+                    {filtro === 'todos' && (
+                      <div onClick={()=>abrirNovo(diaStr)} style={{ height:30,display:'flex',alignItems:'center',justifyContent:'center',cursor:'pointer',color:'var(--text3)',fontSize:12 }}>
+                        + evento
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

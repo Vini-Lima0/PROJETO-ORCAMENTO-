@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { Usuario } from '../types';
 
-interface Props { onLogin: (email:string, role:'admin'|'operacional') => void; }
+interface Props {
+  usuarios: Usuario[];
+  onLogin: (usuario: Usuario) => void;
+}
 
-export default function Login({ onLogin }: Props) {
-  const [email, setEmail] = useState('admin@empresa.com');
+export default function Login({ usuarios, onLogin }: Props) {
+  const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
@@ -12,9 +16,14 @@ export default function Login({ onLogin }: Props) {
     e.preventDefault();
     setErro('');
     if (!email || !senha) { setErro('Preencha e-mail e senha.'); return; }
-    if (senha.length < 4) { setErro('Senha incorreta.'); return; }
+
+    const usuario = usuarios.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (!usuario) { setErro('E-mail não encontrado.'); return; }
+    if (!usuario.ativo) { setErro('Usuário inativo. Contate o administrador.'); return; }
+    if (usuario.senha !== senha) { setErro('Senha incorreta.'); return; }
+
     setLoading(true);
-    setTimeout(() => { onLogin(email, email.includes('operacional') ? 'operacional' : 'admin'); }, 700);
+    setTimeout(() => onLogin(usuario), 700);
   };
 
   return (
@@ -31,20 +40,22 @@ export default function Login({ onLogin }: Props) {
           <form onSubmit={handleSubmit}>
             <div style={{ marginBottom:14 }}>
               <label style={{ fontSize:12,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:6 }}>E-mail</label>
-              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com" style={{ width:'100%',padding:'10px 14px',border:'1px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',transition:'border .15s' }} onFocus={e=>(e.target.style.borderColor='#888')} onBlur={e=>(e.target.style.borderColor='var(--border)')} />
+              <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="seu@email.com"
+                style={{ width:'100%',padding:'10px 14px',border:'1px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',transition:'border .15s' }}
+                onFocus={e=>(e.target.style.borderColor='#888')} onBlur={e=>(e.target.style.borderColor='var(--border)')} />
             </div>
             <div style={{ marginBottom:20 }}>
               <label style={{ fontSize:12,fontWeight:500,color:'var(--text2)',display:'block',marginBottom:6 }}>Senha</label>
-              <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••" style={{ width:'100%',padding:'10px 14px',border:'1px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',transition:'border .15s' }} onFocus={e=>(e.target.style.borderColor='#888')} onBlur={e=>(e.target.style.borderColor='var(--border)')} />
-              <div style={{ textAlign:'right',marginTop:6 }}><button type="button" style={{ background:'none',border:'none',cursor:'pointer',fontSize:12.5,color:'var(--blue)',fontFamily:"'Inter',sans-serif" }}>Esqueci minha senha</button></div>
+              <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="••••••••"
+                style={{ width:'100%',padding:'10px 14px',border:'1px solid var(--border)',borderRadius:10,fontSize:14,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',transition:'border .15s' }}
+                onFocus={e=>(e.target.style.borderColor='#888')} onBlur={e=>(e.target.style.borderColor='var(--border)')} />
             </div>
             {erro && <div style={{ padding:'10px 14px',background:'var(--red-bg)',color:'var(--red)',borderRadius:9,fontSize:13,marginBottom:14 }}>{erro}</div>}
-            <button type="submit" disabled={loading} style={{ width:'100%',padding:'12px',background:loading?'var(--surface3)':'var(--text)',color:loading?'var(--text2)':'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,fontFamily:"'Inter',sans-serif",cursor:loading?'not-allowed':'pointer',transition:'all .15s' }}>{loading?'Entrando...':'Entrar'}</button>
+            <button type="submit" disabled={loading}
+              style={{ width:'100%',padding:'12px',background:loading?'var(--surface3)':'var(--text)',color:loading?'var(--text2)':'#fff',border:'none',borderRadius:10,fontSize:14,fontWeight:600,fontFamily:"'Inter',sans-serif",cursor:loading?'not-allowed':'pointer',transition:'all .15s' }}>
+              {loading ? 'Entrando...' : 'Entrar'}
+            </button>
           </form>
-          <div style={{ marginTop:20,padding:'12px 14px',background:'var(--surface2)',borderRadius:9,fontSize:12,color:'var(--text2)',lineHeight:1.6 }}>
-            💡 <strong>Demo:</strong> Use qualquer e-mail + senha com 4+ caracteres.<br/>
-            <span style={{ color:'var(--text3)' }}>Admin: admin@empresa.com | Operacional: operacional@empresa.com</span>
-          </div>
         </div>
       </div>
     </div>

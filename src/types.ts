@@ -1,5 +1,15 @@
 export type OrcamentoStatus = 'rascunho' | 'enviado' | 'aprovado' | 'recusado' | 'aguardando';
 
+export interface Usuario {
+  id: string;
+  nome: string;
+  email: string;
+  senha: string;
+  role: 'admin' | 'operacional';
+  ativo: boolean;
+  criadoEm: string;
+}
+
 export interface LineItem {
   id: string;
   descricao: string;
@@ -65,6 +75,7 @@ export interface Evento {
   horaFim: string;
   tipo: 'evento' | 'reuniao' | 'entrega' | 'outro';
   descricao: string;
+  concluido: boolean;
 }
 
-export type Section = 'dashboard' | 'orcamentos' | 'novo-orcamento' | 'clientes' | 'produtos' | 'agenda' | 'tarefas' | 'configuracoes';
+export type Section = 'dashboard' | 'orcamentos' | 'novo-orcamento' | 'clientes' | 'produtos' | 'agenda' | 'configuracoes' | 'usuarios';

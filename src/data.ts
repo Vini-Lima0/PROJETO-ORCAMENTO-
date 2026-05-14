@@ -1,4 +1,5 @@
-import { Orcamento, Cliente, Produto, Tarefa, Evento } from './types';
+import { Orcamento, Cliente, Produto, Tarefa, Evento, Usuario } from './types';
+import { v4 as uuid } from 'uuid';
 import { format, addDays } from 'date-fns';
 
 const hoje = new Date();
@@ -82,12 +83,16 @@ export const tarefasIniciais: Tarefa[] = [
 ];
 
 export const eventosIniciais: Evento[] = [
-  { id: 'e1', titulo: 'Montagem Eventos Prime', data: fmt(hoje), horaInicio: '08:00', horaFim: '12:00', tipo: 'evento', descricao: 'Montagem completa do sistema AV' },
-  { id: 'e2', titulo: 'Reunião equipe operacional', data: fmt(hoje), horaInicio: '14:00', horaFim: '15:00', tipo: 'reuniao', descricao: '' },
-  { id: 'e3', titulo: 'Entrega equipamentos Vega', data: fmt(addDays(hoje, 1)), horaInicio: '09:00', horaFim: '11:30', tipo: 'entrega', descricao: 'Gerador + equipe de instalação' },
-  { id: 'e4', titulo: 'Visita técnica Clínica Saúde', data: fmt(addDays(hoje, 2)), horaInicio: '10:00', horaFim: '12:00', tipo: 'evento', descricao: '' },
-  { id: 'e5', titulo: 'Follow-up orçamentos pendentes', data: fmt(addDays(hoje, 2)), horaInicio: '16:00', horaFim: '17:00', tipo: 'reuniao', descricao: '' },
-  { id: 'e6', titulo: 'Desmontagem Eventos Prime', data: fmt(addDays(hoje, 3)), horaInicio: '07:00', horaFim: '11:00', tipo: 'entrega', descricao: '' },
+  { id: 'e1', titulo: 'Montagem Eventos Prime', data: fmt(hoje), horaInicio: '08:00', horaFim: '12:00', tipo: 'evento', descricao: 'Montagem completa do sistema AV', concluido: false },
+  { id: 'e2', titulo: 'Reunião equipe operacional', data: fmt(hoje), horaInicio: '14:00', horaFim: '15:00', tipo: 'reuniao', descricao: '', concluido: false },
+  { id: 'e3', titulo: 'Entrega equipamentos Vega', data: fmt(addDays(hoje, 1)), horaInicio: '09:00', horaFim: '11:30', tipo: 'entrega', descricao: 'Gerador + equipe de instalação', concluido: false },
+  { id: 'e4', titulo: 'Visita técnica Clínica Saúde', data: fmt(addDays(hoje, 2)), horaInicio: '10:00', horaFim: '12:00', tipo: 'evento', descricao: '', concluido: false },
+  { id: 'e5', titulo: 'Follow-up orçamentos pendentes', data: fmt(addDays(hoje, 2)), horaInicio: '16:00', horaFim: '17:00', tipo: 'reuniao', descricao: '', concluido: false },
+  { id: 'e6', titulo: 'Desmontagem Eventos Prime', data: fmt(addDays(hoje, 3)), horaInicio: '07:00', horaFim: '11:00', tipo: 'entrega', descricao: '', concluido: false },
+];
+
+export const usuariosIniciais: Usuario[] = [
+  { id: uuid(), nome: 'Administrador', email: 'admin@empresa.com', senha: 'admin123', role: 'admin', ativo: true, criadoEm: fmt(hoje) },
 ];
 
 export function calcularTotais(orc: Pick<Orcamento, 'itens' | 'desconto' | 'impostos'>): { subtotal: number; total: number } {
