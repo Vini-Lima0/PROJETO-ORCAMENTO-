@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
-import { Section, Orcamento, Cliente, Produto, Tarefa, Evento, Usuario } from './types';
-import { loadData, saveData, calcularTotais, clientesIniciais, produtosIniciais, orcamentosIniciais, tarefasIniciais, eventosIniciais, usuariosIniciais } from './data';
+import { Section, Orcamento, Cliente, Produto, Evento, Usuario } from './types';
+import { loadData, saveData, calcularTotais, clientesIniciais, produtosIniciais, orcamentosIniciais, eventosIniciais, usuariosIniciais } from './data';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Orcamentos from './components/Orcamentos';
@@ -9,14 +9,13 @@ import NovoOrcamento from './components/NovoOrcamento';
 import Clientes from './components/Clientes';
 import Produtos from './components/Produtos';
 import Agenda from './components/Agenda';
-import Tarefas from './components/Tarefas';
 import Configuracoes from './components/Configuracoes';
 import Usuarios from './components/Usuarios';
 
 const pageTitles: Record<Section, string> = {
   dashboard:'Dashboard', orcamentos:'Orçamentos', 'novo-orcamento':'Orçamento',
   clientes:'Clientes', produtos:'Produtos & Serviços', agenda:'Agenda',
-  tarefas:'Tarefas', configuracoes:'Configurações', usuarios:'Usuários',
+  configuracoes:'Configurações', usuarios:'Usuários',
 };
 
 function NavItem({ label, icon, active, onClick, badge, dot }: any) {
@@ -48,14 +47,12 @@ export default function App() {
   );
   const [clientes, setClientes] = useState<Cliente[]>(() => loadData('opsuite_cli', clientesIniciais));
   const [produtos, setProdutos] = useState<Produto[]>(() => loadData('opsuite_prod', produtosIniciais));
-  const [tarefas, setTarefas] = useState<Tarefa[]>(() => loadData('opsuite_tar', tarefasIniciais));
   const [eventos, setEventos] = useState<Evento[]>(() => loadData('opsuite_ev', eventosIniciais));
   const [usuarios, setUsuarios] = useState<Usuario[]>(() => loadData('opsuite_usr', usuariosIniciais));
 
   useEffect(() => { saveData('opsuite_orc', orcamentos); }, [orcamentos]);
   useEffect(() => { saveData('opsuite_cli', clientes); }, [clientes]);
   useEffect(() => { saveData('opsuite_prod', produtos); }, [produtos]);
-  useEffect(() => { saveData('opsuite_tar', tarefas); }, [tarefas]);
   useEffect(() => { saveData('opsuite_ev', eventos); }, [eventos]);
   useEffect(() => { saveData('opsuite_usr', usuarios); }, [usuarios]);
   useEffect(() => {
@@ -104,8 +101,7 @@ export default function App() {
       case 'novo-orcamento': return <NovoOrcamento orcamento={editOrc} clientes={clientes} produtos={produtos} proximoNumero={proximoNumero} onSalvar={saveOrc} onCancelar={()=>navTo('orcamentos')} onSalvarCliente={c=>setClientes(p=>{const i=p.findIndex(x=>x.id===c.id);if(i>=0){const n=[...p];n[i]=c;return n;}return[c,...p];})} />;
       case 'clientes': return <Clientes clientes={clientesFiltrados} onSalvar={c=>{setClientes(p=>{const i=p.findIndex(x=>x.id===c.id);if(i>=0){const n=[...p];n[i]=c;return n;}return[c,...p];});}} onDelete={id=>setClientes(p=>p.filter(c=>c.id!==id))} />;
       case 'produtos': return <Produtos produtos={produtosFiltrados} onSalvar={p=>{setProdutos(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i>=0){const n=[...prev];n[i]=p;return n;}return[p,...prev];});}} onDelete={id=>setProdutos(p=>p.filter(x=>x.id!==id))} />;
-      case 'agenda': return <Agenda eventos={eventos} onSalvar={e=>{setEventos(p=>{const i=p.findIndex(x=>x.id===e.id);if(i>=0){const n=[...p];n[i]=e;return n;}return[...p,e];});}} onDelete={id=>setEventos(p=>p.filter(e=>e.id!==id))} />;
-      case 'tarefas': return <Tarefas tarefas={tarefas} onSalvar={t=>{setTarefas(p=>{const i=p.findIndex(x=>x.id===t.id);if(i>=0){const n=[...p];n[i]=t;return n;}return[t,...p];});}} onDelete={id=>setTarefas(p=>p.filter(t=>t.id!==id))} onToggle={id=>setTarefas(p=>p.map(t=>t.id===id?{...t,concluida:!t.concluida}:t))} />;
+      case 'agenda': return <Agenda eventos={eventos} onSalvar={e=>{setEventos(p=>{const i=p.findIndex(x=>x.id===e.id);if(i>=0){const n=[...p];n[i]=e;return n;}return[...p,e];});}} onDelete={id=>setEventos(p=>p.filter(e=>e.id!==id))} onToggle={id=>setEventos(p=>p.map(e=>e.id===id?{...e,concluido:!e.concluido}:e))} />;
       case 'configuracoes': return <Configuracoes />;
       case 'usuarios': return user.role === 'admin'
         ? <Usuarios usuarios={usuarios} usuarioAtualId={user.id} onSalvar={saveUsuario} onDelete={id=>setUsuarios(p=>p.filter(u=>u.id!==id))} />
@@ -114,7 +110,6 @@ export default function App() {
     }
   };
 
-  const pendAlta = tarefas.filter(t=>!t.concluida&&t.prioridade==='alta').length;
   const pendOrc = orcamentos.filter(o=>o.status==='aguardando').length;
 
   return (
@@ -137,7 +132,6 @@ export default function App() {
           <NavItem label="Produtos" icon="📦" active={section==='produtos'} onClick={()=>navTo('produtos')} />
           <div style={{fontSize:10,fontWeight:500,color:'rgba(255,255,255,0.25)',letterSpacing:'1.2px',padding:'16px 8px 4px'}}>OPERACIONAL</div>
           <NavItem label="Agenda" icon="📅" active={section==='agenda'} onClick={()=>navTo('agenda')} dot />
-          <NavItem label="Tarefas" icon="✓" active={section==='tarefas'} onClick={()=>navTo('tarefas')} badge={pendAlta||undefined} />
           <div style={{fontSize:10,fontWeight:500,color:'rgba(255,255,255,0.25)',letterSpacing:'1.2px',padding:'16px 8px 4px'}}>SISTEMA</div>
           {user.role === 'admin' && <NavItem label="Usuários" icon="👤" active={section==='usuarios'} onClick={()=>navTo('usuarios')} />}
           <NavItem label="Configurações" icon="⚙" active={section==='configuracoes'} onClick={()=>navTo('configuracoes')} />
@@ -166,8 +160,7 @@ export default function App() {
                 {section==='orcamentos'&&(q?`${orcamentosFiltrados.length} resultado(s) para "${busca}"` : `${orcamentos.length} orçamentos no total`)}
                 {section==='clientes'&&(q?`${clientesFiltrados.length} resultado(s) para "${busca}"` : `${clientes.length} clientes cadastrados`)}
                 {section==='produtos'&&(q?`${produtosFiltrados.length} resultado(s) para "${busca}"` : `${produtos.length} itens no catálogo`)}
-                {section==='agenda'&&'Agenda da semana'}
-                {section==='tarefas'&&`${tarefas.filter(t=>!t.concluida).length} tarefas pendentes`}
+                {section==='agenda'&&`${eventos.filter(e=>!e.concluido).length} eventos pendentes`}
                 {section==='usuarios'&&`${usuarios.length} usuário(s) cadastrado(s)`}
                 {(section==='novo-orcamento')&&(editOrc?`Editando #${editOrc.numero}`:`Novo #${proximoNumero}`)}
               </div>
@@ -175,7 +168,7 @@ export default function App() {
           </div>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
             {!isMobile && (<div style={{display:'flex',alignItems:'center',gap:8,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 12px'}}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder={`Buscar em ${pageTitles[section].toLowerCase()}...`} value={busca} onChange={e=>setBusca(e.target.value)} style={{border:'none',outline:'none',fontSize:13,fontFamily:"'Inter',sans-serif",color:'var(--text)',background:'transparent',width:180}} />{busca&&(<button onClick={()=>setBusca('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:16,lineHeight:1,padding:0}}>×</button>)}</div>)}
-            <div style={{width:36,height:36,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',fontSize:16}}>🔔{pendAlta>0&&<span style={{position:'absolute',top:7,right:8,width:6,height:6,borderRadius:'50%',background:'var(--green)',border:'1.5px solid var(--surface)'}} />}</div>
+            <div style={{width:36,height:36,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',fontSize:16}}>🔔</div>
             <button onClick={()=>{setEditOrc(null);navTo('novo-orcamento');}} style={{display:'flex',alignItems:'center',gap:7,padding:'9px 16px',borderRadius:10,background:'var(--text)',color:'#fff',border:'none',cursor:'pointer',fontSize:13.5,fontWeight:500,fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap'}}>+ Novo orçamento</button>
           </div>
         </div>

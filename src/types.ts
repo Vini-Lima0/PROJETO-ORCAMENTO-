@@ -74,6 +74,7 @@ export interface Evento {
   horaFim: string;
   tipo: 'evento' | 'reuniao' | 'entrega' | 'outro';
   descricao: string;
+  concluido: boolean;
 }
 
-export type Section = 'dashboard' | 'orcamentos' | 'novo-orcamento' | 'clientes' | 'produtos' | 'agenda' | 'tarefas' | 'configuracoes' | 'usuarios';
+export type Section = 'dashboard' | 'orcamentos' | 'novo-orcamento' | 'clientes' | 'produtos' | 'agenda' | 'configuracoes' | 'usuarios';
