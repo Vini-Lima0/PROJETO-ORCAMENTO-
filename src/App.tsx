@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './index.css';
-import { Section, Orcamento, Cliente, Produto, Tarefa, Evento } from './types';
-import { loadData, saveData, calcularTotais, clientesIniciais, produtosIniciais, orcamentosIniciais, tarefasIniciais, eventosIniciais } from './data';
+import { Section, Orcamento, Cliente, Produto, Tarefa, Evento, Usuario } from './types';
+import { loadData, saveData, calcularTotais, clientesIniciais, produtosIniciais, orcamentosIniciais, tarefasIniciais, eventosIniciais, usuariosIniciais } from './data';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Orcamentos from './components/Orcamentos';
@@ -11,13 +11,12 @@ import Produtos from './components/Produtos';
 import Agenda from './components/Agenda';
 import Tarefas from './components/Tarefas';
 import Configuracoes from './components/Configuracoes';
-
-interface User { email: string; role: 'admin' | 'operacional'; nome: string; }
+import Usuarios from './components/Usuarios';
 
 const pageTitles: Record<Section, string> = {
   dashboard:'Dashboard', orcamentos:'Orçamentos', 'novo-orcamento':'Orçamento',
   clientes:'Clientes', produtos:'Produtos & Serviços', agenda:'Agenda',
-  tarefas:'Tarefas', configuracoes:'Configurações',
+  tarefas:'Tarefas', configuracoes:'Configurações', usuarios:'Usuários',
 };
 
 function NavItem({ label, icon, active, onClick, badge, dot }: any) {
@@ -37,7 +36,7 @@ function NavItem({ label, icon, active, onClick, badge, dot }: any) {
 }
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<Usuario | null>(null);
   const [section, setSection] = useState<Section>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editOrc, setEditOrc] = useState<Orcamento | null>(null);
@@ -51,12 +50,14 @@ export default function App() {
   const [produtos, setProdutos] = useState<Produto[]>(() => loadData('opsuite_prod', produtosIniciais));
   const [tarefas, setTarefas] = useState<Tarefa[]>(() => loadData('opsuite_tar', tarefasIniciais));
   const [eventos, setEventos] = useState<Evento[]>(() => loadData('opsuite_ev', eventosIniciais));
+  const [usuarios, setUsuarios] = useState<Usuario[]>(() => loadData('opsuite_usr', usuariosIniciais));
 
   useEffect(() => { saveData('opsuite_orc', orcamentos); }, [orcamentos]);
   useEffect(() => { saveData('opsuite_cli', clientes); }, [clientes]);
   useEffect(() => { saveData('opsuite_prod', produtos); }, [produtos]);
   useEffect(() => { saveData('opsuite_tar', tarefas); }, [tarefas]);
   useEffect(() => { saveData('opsuite_ev', eventos); }, [eventos]);
+  useEffect(() => { saveData('opsuite_usr', usuarios); }, [usuarios]);
   useEffect(() => {
     const h = () => setIsMobile(window.innerWidth <= 900);
     window.addEventListener('resize', h); return () => window.removeEventListener('resize', h);
@@ -75,7 +76,12 @@ export default function App() {
     navTo('orcamentos');
   };
 
-  if (!user) return <Login onLogin={(email,role)=>setUser({email,role,nome:role==='admin'?'Admin Master':'Operacional'})} />;
+  const saveUsuario = (u: Usuario) => {
+    setUsuarios(p => { const i=p.findIndex(x=>x.id===u.id); if(i>=0){const n=[...p];n[i]=u;return n;} return [u,...p]; });
+    if (user && u.id === user.id) setUser(u);
+  };
+
+  if (!user) return <Login usuarios={usuarios} onLogin={u => { setUser(u); }} />;
 
   const q = busca.toLowerCase().trim();
   const orcamentosFiltrados = q ? orcamentos.filter(o =>
@@ -101,6 +107,9 @@ export default function App() {
       case 'agenda': return <Agenda eventos={eventos} onSalvar={e=>{setEventos(p=>{const i=p.findIndex(x=>x.id===e.id);if(i>=0){const n=[...p];n[i]=e;return n;}return[...p,e];});}} onDelete={id=>setEventos(p=>p.filter(e=>e.id!==id))} />;
       case 'tarefas': return <Tarefas tarefas={tarefas} onSalvar={t=>{setTarefas(p=>{const i=p.findIndex(x=>x.id===t.id);if(i>=0){const n=[...p];n[i]=t;return n;}return[t,...p];});}} onDelete={id=>setTarefas(p=>p.filter(t=>t.id!==id))} onToggle={id=>setTarefas(p=>p.map(t=>t.id===id?{...t,concluida:!t.concluida}:t))} />;
       case 'configuracoes': return <Configuracoes />;
+      case 'usuarios': return user.role === 'admin'
+        ? <Usuarios usuarios={usuarios} usuarioAtualId={user.id} onSalvar={saveUsuario} onDelete={id=>setUsuarios(p=>p.filter(u=>u.id!==id))} />
+        : <div style={{padding:40,textAlign:'center',color:'var(--text3)'}}>Acesso restrito a administradores.</div>;
       default: return <div style={{padding:40,textAlign:'center',color:'var(--text3)'}}>Em desenvolvimento</div>;
     }
   };
@@ -130,6 +139,7 @@ export default function App() {
           <NavItem label="Agenda" icon="📅" active={section==='agenda'} onClick={()=>navTo('agenda')} dot />
           <NavItem label="Tarefas" icon="✓" active={section==='tarefas'} onClick={()=>navTo('tarefas')} badge={pendAlta||undefined} />
           <div style={{fontSize:10,fontWeight:500,color:'rgba(255,255,255,0.25)',letterSpacing:'1.2px',padding:'16px 8px 4px'}}>SISTEMA</div>
+          {user.role === 'admin' && <NavItem label="Usuários" icon="👤" active={section==='usuarios'} onClick={()=>navTo('usuarios')} />}
           <NavItem label="Configurações" icon="⚙" active={section==='configuracoes'} onClick={()=>navTo('configuracoes')} />
         </div>
         <div style={{padding:'14px 10px',borderTop:'1px solid rgba(255,255,255,0.07)'}}>
@@ -158,6 +168,7 @@ export default function App() {
                 {section==='produtos'&&(q?`${produtosFiltrados.length} resultado(s) para "${busca}"` : `${produtos.length} itens no catálogo`)}
                 {section==='agenda'&&'Agenda da semana'}
                 {section==='tarefas'&&`${tarefas.filter(t=>!t.concluida).length} tarefas pendentes`}
+                {section==='usuarios'&&`${usuarios.length} usuário(s) cadastrado(s)`}
                 {(section==='novo-orcamento')&&(editOrc?`Editando #${editOrc.numero}`:`Novo #${proximoNumero}`)}
               </div>
             </div>

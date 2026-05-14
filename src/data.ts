@@ -1,4 +1,5 @@
-import { Orcamento, Cliente, Produto, Tarefa, Evento } from './types';
+import { Orcamento, Cliente, Produto, Tarefa, Evento, Usuario } from './types';
+import { v4 as uuid } from 'uuid';
 import { format, addDays } from 'date-fns';
 
 const hoje = new Date();
@@ -88,6 +89,10 @@ export const eventosIniciais: Evento[] = [
   { id: 'e4', titulo: 'Visita técnica Clínica Saúde', data: fmt(addDays(hoje, 2)), horaInicio: '10:00', horaFim: '12:00', tipo: 'evento', descricao: '' },
   { id: 'e5', titulo: 'Follow-up orçamentos pendentes', data: fmt(addDays(hoje, 2)), horaInicio: '16:00', horaFim: '17:00', tipo: 'reuniao', descricao: '' },
   { id: 'e6', titulo: 'Desmontagem Eventos Prime', data: fmt(addDays(hoje, 3)), horaInicio: '07:00', horaFim: '11:00', tipo: 'entrega', descricao: '' },
+];
+
+export const usuariosIniciais: Usuario[] = [
+  { id: uuid(), nome: 'Administrador', email: 'admin@empresa.com', senha: 'admin123', role: 'admin', ativo: true, criadoEm: fmt(hoje) },
 ];
 
 export function calcularTotais(orc: Pick<Orcamento, 'itens' | 'desconto' | 'impostos'>): { subtotal: number; total: number } {
