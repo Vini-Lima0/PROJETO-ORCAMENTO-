@@ -1,33 +1,40 @@
-# Regras de Desenvolvimento
+# OpSuite — Instruções para o Claude Code
 
-## Branches de trabalho
+## IMPORTANTE — Primeira ação de cada sessão
+Ao iniciar qualquer sessão, pergunte: **"Você é Lima ou Lucas?"**
+- Se **Lima** → trabalhe na branch `feature/lima`
+- Se **Lucas** → trabalhe na branch `feature/lucas`
+- NUNCA desenvolva direto na `main`
 
-Este projeto tem dois desenvolvedores com branches dedicadas:
+## Fluxo obrigatório
+1. Todas as alterações vão para a branch do usuário (`feature/lima` ou `feature/lucas`)
+2. Ao terminar, abra um Pull Request para `main`
+3. Somente após merge na `main` o Railway faz o deploy
 
-| Desenvolvedor | Branch de trabalho |
-|---|---|
-| Lucas | `feature/lucas` |
-| Lima | `feature/lima` |
+## PROIBIDO — Nunca faça isso
+- **NUNCA crie, edite ou delete o arquivo `CLAUDE.md`** — ele já existe no `main` e qualquer alteração gera conflito de PR
+- **NUNCA commite direto na `main`**
+- **NUNCA altere `railway.toml`** sem aprovação explícita
 
-## Regra principal
+## Repositório
+- Owner: lucasr8eventos-dotcom
+- Repo: PROJETO-ORCAMENTO-
 
-**NUNCA commitar direto na `main`.**
+## Stack
+- React 19 + TypeScript
+- Fontes: Outfit (títulos) + Inter (corpo)
+- Persistência: localStorage (sem backend ainda)
+- Deploy: Railway (branch `main`)
 
-Toda alteração vai para a branch do desenvolvedor correspondente. O merge na `main` é feito via Pull Request após revisão dos dois.
+## Estrutura
+- `src/types.ts` — todos os tipos TypeScript
+- `src/data.ts` — dados iniciais e helpers de localStorage
+- `src/components/ui.tsx` — componentes reutilizáveis (Btn, Card, Modal, etc.)
+- `src/components/` — telas: Dashboard, Orcamentos, Clientes, Produtos, Agenda, Tarefas, Configuracoes
+- `src/pdfGenerator.ts` — geração de PDF com jsPDF
 
-## Instrução para o Claude Code
-
-Ao iniciar uma sessão, identifique quem está trabalhando:
-
-- Se for **Lucas** → trabalhe na branch `feature/lucas`
-- Se for **Lima** → trabalhe na branch `feature/lima`
-
-Se não souber quem é, pergunte antes de commitar.
-
-## Fluxo de trabalho
-
-1. Claude faz as alterações na branch do desenvolvedor
-2. Push para o GitHub
-3. Abrir Pull Request para `main`
-4. O outro desenvolvedor revisa e aprova
-5. Merge na `main` → deploy automático no site
+## Padrões
+- Inline styles em React (sem CSS modules ou Tailwind)
+- Variáveis CSS definidas em `src/index.css` (--bg, --surface, --text, --border, etc.)
+- IDs gerados com `uuid`
+- Datas com `date-fns` e locale `ptBR`
