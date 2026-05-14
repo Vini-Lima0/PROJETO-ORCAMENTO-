@@ -57,12 +57,12 @@ export default function Orcamentos({ orcamentos, onNovo, onEditar, onDelete, onS
       </div>
 
       <div style={{ display:'flex',gap:10,marginBottom:16,flexWrap:'wrap' }}>
-        <select value={mes} onChange={e=>setMes(e.target.value)} style={{ padding:'8px 12px',border:'1px solid var(--border)',borderRadius:10,fontSize:13,fontFamily:"'DM Sans',sans-serif",color:'var(--text)',background:'var(--surface)',outline:'none',cursor:'pointer' }}>
+        <select value={mes} onChange={e=>setMes(e.target.value)} style={{ padding:'8px 12px',border:'1px solid var(--border)',borderRadius:10,fontSize:13,fontFamily:"'Inter',sans-serif",color:'var(--text)',background:'var(--surface)',outline:'none',cursor:'pointer' }}>
           {months.map((m,i) => <option key={i} value={String(i)}>{m}</option>)}
         </select>
         <div style={{ flex:1,maxWidth:320,display:'flex',alignItems:'center',gap:8,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 12px' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar cliente ou número..." style={{ border:'none',outline:'none',fontSize:13,fontFamily:"'DM Sans',sans-serif",color:'var(--text)',background:'transparent',width:'100%' }} />
+          <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar cliente ou número..." style={{ border:'none',outline:'none',fontSize:13,fontFamily:"'Inter',sans-serif",color:'var(--text)',background:'transparent',width:'100%' }} />
         </div>
       </div>
 

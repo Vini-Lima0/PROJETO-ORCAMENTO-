@@ -80,7 +80,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
       <div style={{ display:'flex',alignItems:'center',gap:12,marginBottom:22,flexWrap:'wrap' }}>
         <button onClick={onCancelar} style={{ width:36,height:36,borderRadius:10,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text)',fontSize:18 }}>←</button>
         <div>
-          <div style={{ fontFamily:"'Syne',sans-serif",fontSize:18,fontWeight:700 }}>{isEdit ? 'Editar Orçamento' : 'Novo Orçamento'}</div>
+          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:18,fontWeight:700 }}>{isEdit ? 'Editar Orçamento' : 'Novo Orçamento'}</div>
           <div style={{ fontSize:12,color:'var(--text2)' }}>#{isEdit ? orcamento!.numero : proximoNumero} · {format(hoje, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</div>
         </div>
         <StatusBadge status={status} />
@@ -92,7 +92,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
       </div>
 
       <Card style={{ marginBottom: 14 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:600,marginBottom:16 }}>Dados do cliente</div>
+        <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:16 }}>Dados do cliente</div>
         <div style={{ display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:14 }}>
           <FormField label="Cliente *">
             <Select value={clienteId} onChange={e => { setClienteId(e.target.value); const c=clientes.find(x=>x.id===e.target.value); if(c)setContato(c.nome); }}>
@@ -127,9 +127,9 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
       <Card style={{ marginBottom: 14 }}>
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16 }}>
-          <span style={{ fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:600 }}>Itens do orçamento</span>
+          <span style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600 }}>Itens do orçamento</span>
           <div style={{ display:'flex',gap:8 }}>
-            <select onChange={e=>{if(e.target.value){addItemFromProduto(e.target.value);e.target.value=''}}} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:9,fontSize:12.5,fontFamily:"'DM Sans',sans-serif",color:'var(--text2)',background:'var(--surface)',cursor:'pointer',outline:'none' }}>
+            <select onChange={e=>{if(e.target.value){addItemFromProduto(e.target.value);e.target.value=''}}} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:9,fontSize:12.5,fontFamily:"'Inter',sans-serif",color:'var(--text2)',background:'var(--surface)',cursor:'pointer',outline:'none' }}>
               <option value="">+ Adicionar do catálogo</option>
               {produtos.filter(p=>p.ativo).map(p=><option key={p.id} value={p.id}>{p.nome} — {fmtMoeda(p.preco)}/{p.unidade}</option>)}
             </select>
@@ -143,10 +143,10 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         <div style={{ border:'1px solid var(--border)',borderTop:'none',borderRadius:'0 0 9px 9px',overflow:'hidden' }}>
           {itens.map((item, idx) => (
             <div key={item.id} style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 0.8fr 0.8fr 36px',gap:8,padding:'8px 12px',borderBottom: idx < itens.length-1 ? '1px solid var(--border)' : 'none',alignItems:'center' }}>
-              <input value={item.descricao} onChange={e=>updateItem(item.id,'descricao',e.target.value)} placeholder="Descrição do item..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
-              <input type="number" value={item.quantidade} min={1} onChange={e=>updateItem(item.id,'quantidade',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
-              <input type="number" value={item.valorUnitario} min={0} step={0.01} onChange={e=>updateItem(item.id,'valorUnitario',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
-              <input value={item.periodo||''} onChange={e=>updateItem(item.id,'periodo',e.target.value)} placeholder="ex: Chuveiro, 3 dias..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
+              <input value={item.descricao} onChange={e=>updateItem(item.id,'descricao',e.target.value)} placeholder="Descrição do item..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
+              <input type="number" value={item.quantidade} min={1} onChange={e=>updateItem(item.id,'quantidade',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
+              <input type="number" value={item.valorUnitario} min={0} step={0.01} onChange={e=>updateItem(item.id,'valorUnitario',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
+              <input value={item.periodo||''} onChange={e=>updateItem(item.id,'periodo',e.target.value)} placeholder="ex: Chuveiro, 3 dias..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
               <span style={{ fontSize:13,fontWeight:600,textAlign:'right',paddingRight:4,whiteSpace:'nowrap' }}>{fmtMoeda(item.quantidade*item.valorUnitario)}</span>
               <button onClick={()=>removeItem(item.id)} style={{ width:30,height:30,borderRadius:7,border:'none',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text3)',fontSize:16,transition:'all .15s' }}
                 onMouseEnter={e=>{e.currentTarget.style.background='var(--red-bg)';e.currentTarget.style.color='var(--red)'}}
@@ -159,12 +159,12 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
         <Card>
-          <div style={{ fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Observações</div>
+          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Observações</div>
           <Textarea rows={5} value={observacoes} onChange={e=>setObservacoes(e.target.value)} placeholder="Condições de pagamento, prazo de entrega, notas..." />
         </Card>
 
         <Card style={{ background:'var(--surface2)' }}>
-          <div style={{ fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Resumo financeiro</div>
+          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Resumo financeiro</div>
           {[
             ['Subtotal', fmtMoeda(subtotal)],
           ].map(([l,v])=>(
@@ -175,7 +175,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10 }}>
             <span style={{fontSize:13.5,color:'var(--text2)'}}>Desconto</span>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <input type="number" value={desconto} min={0} max={100} onChange={e=>setDesconto(parseFloat(e.target.value)||0)} style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
+              <input type="number" value={desconto} min={0} max={100} onChange={e=>setDesconto(parseFloat(e.target.value)||0)} style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
               <span style={{fontSize:12,color:'var(--text3)'}}>%</span>
               <span style={{fontSize:13,color:'var(--text)',fontWeight:500,minWidth:80,textAlign:'right'}}>- {fmtMoeda(descontoVal)}</span>
             </div>
@@ -183,14 +183,14 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           <div style={{ display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:10 }}>
             <span style={{fontSize:13.5,color:'var(--text2)'}}>Impostos</span>
             <div style={{display:'flex',alignItems:'center',gap:6}}>
-              <input type="number" value={impostos} min={0} max={100} onChange={e=>setImpostos(parseFloat(e.target.value)||0)} style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'DM Sans',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
+              <input type="number" value={impostos} min={0} max={100} onChange={e=>setImpostos(parseFloat(e.target.value)||0)} style={{width:52,padding:'5px 8px',border:'1px solid var(--border)',borderRadius:7,fontSize:13,textAlign:'center',fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)'}} />
               <span style={{fontSize:12,color:'var(--text3)'}}>%</span>
               <span style={{fontSize:13,color:'var(--text)',fontWeight:500,minWidth:80,textAlign:'right'}}>+ {fmtMoeda(impostosVal)}</span>
             </div>
           </div>
           <div style={{ borderTop:'1px solid var(--border2)',paddingTop:12,marginTop:4,display:'flex',justifyContent:'space-between',alignItems:'center' }}>
-            <span style={{fontFamily:"'Syne',sans-serif",fontSize:16,fontWeight:700}}>TOTAL</span>
-            <span style={{fontFamily:"'Syne',sans-serif",fontSize:22,fontWeight:700,color:'var(--text)'}}>{fmtMoeda(total)}</span>
+            <span style={{fontFamily:"'Outfit',sans-serif",fontSize:16,fontWeight:700}}>TOTAL</span>
+            <span style={{fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:700,color:'var(--text)'}}>{fmtMoeda(total)}</span>
           </div>
           <Btn variant="primary" onClick={()=>handleSalvar()} style={{width:'100%',justifyContent:'center',marginTop:14}}>Salvar orçamento</Btn>
         </Card>

@@ -27,7 +27,7 @@ interface BtnProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export function Btn({ variant='ghost', size='md', icon, children, style, ...rest }: BtnProps) {
   const base: React.CSSProperties = {
     display:'inline-flex',alignItems:'center',gap:6,border:'none',cursor:'pointer',
-    fontFamily:"'DM Sans',sans-serif",fontWeight:500,transition:'all .15s',outline:'none',
+    fontFamily:"'Inter',sans-serif",fontWeight:500,transition:'all .15s',outline:'none',
     padding: size==='sm' ? '6px 12px' : '9px 16px',
     fontSize: size==='sm' ? 12.5 : 13.5,
     borderRadius:10,
@@ -46,7 +46,7 @@ export function Card({ children, style, onClick }: { children: React.ReactNode; 
 export function CardHeader({ title, action }: { title: string; action?: React.ReactNode }) {
   return (
     <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18 }}>
-      <span style={{ fontFamily:"'Syne',sans-serif",fontSize:14.5,fontWeight:600 }}>{title}</span>
+      <span style={{ fontFamily:"'Outfit',sans-serif",fontSize:14.5,fontWeight:600 }}>{title}</span>
       {action}
     </div>
   );
@@ -63,7 +63,7 @@ export function FormField({ label, children, style }: { label: string; children:
 
 const inputStyle: React.CSSProperties = {
   padding:'9px 12px',border:'1px solid var(--border)',borderRadius:10,
-  fontSize:13.5,fontFamily:"'DM Sans',sans-serif",color:'var(--text)',
+  fontSize:13.5,fontFamily:"'Inter',sans-serif",color:'var(--text)',
   background:'var(--surface)',outline:'none',width:'100%',transition:'border .15s',
 };
 
@@ -87,7 +87,7 @@ export function StatCard({ label, value, badge, iconBg, icon }: { label:string; 
         <div style={{ width:36,height:36,borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',background:iconBg }}>{icon}</div>
         {badge && <span style={{ fontSize:11,fontWeight:500,padding:'3px 8px',borderRadius:20,background:up?'var(--green-bg)':'var(--red-bg)',color:up?'var(--green)':'var(--red)' }}>{badge}</span>}
       </div>
-      <div style={{ fontFamily:"'Syne',sans-serif",fontSize:26,fontWeight:700,letterSpacing:'-0.5px',lineHeight:1 }}>{value}</div>
+      <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:26,fontWeight:700,letterSpacing:'-0.5px',lineHeight:1 }}>{value}</div>
       <div style={{ fontSize:12.5,color:'var(--text2)',marginTop:5 }}>{label}</div>
     </div>
   );
@@ -99,7 +99,7 @@ export function Modal({ open, onClose, title, children, width=520 }: { open:bool
     <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:1000,display:'flex',alignItems:'center',justifyContent:'center',padding:20 }} onClick={onClose}>
       <div style={{ background:'var(--surface)',borderRadius:16,width:'100%',maxWidth:width,maxHeight:'90vh',overflowY:'auto' }} onClick={e=>e.stopPropagation()}>
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',padding:'20px 24px 16px',borderBottom:'1px solid var(--border)' }}>
-          <span style={{ fontFamily:"'Syne',sans-serif",fontSize:16,fontWeight:700 }}>{title}</span>
+          <span style={{ fontFamily:"'Outfit',sans-serif",fontSize:16,fontWeight:700 }}>{title}</span>
           <button onClick={onClose} style={{ background:'none',border:'none',cursor:'pointer',fontSize:20,color:'var(--text2)',lineHeight:1 }}>×</button>
         </div>
         <div style={{ padding:'20px 24px' }}>{children}</div>

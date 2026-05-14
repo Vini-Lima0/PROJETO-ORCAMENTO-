@@ -33,7 +33,7 @@ export default function Configuracoes() {
   return (
     <div style={{ maxWidth:640 }}>
       <Card style={{ marginBottom:14 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:600,marginBottom:16 }}>Logo da empresa</div>
+        <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:16 }}>Logo da empresa</div>
         <div style={{ display:'flex',alignItems:'center',gap:16 }}>
           <div style={{ width:80,height:80,borderRadius:10,border:'1.5px dashed var(--border)',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden',background:'var(--surface2)',flexShrink:0 }}>
             {form.logo ? <img src={form.logo} alt="Logo" style={{ width:'100%',height:'100%',objectFit:'contain' }} /> : <span style={{ fontSize:11,color:'var(--text3)',textAlign:'center',padding:8 }}>Sem logo</span>}
@@ -47,7 +47,7 @@ export default function Configuracoes() {
         </div>
       </Card>
       <Card style={{ marginBottom:16 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif",fontSize:14,fontWeight:600,marginBottom:18 }}>Dados da empresa</div>
+        <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:18 }}>Dados da empresa</div>
         <div style={{ display:'flex',flexDirection:'column',gap:14 }}>
           <FormField label="Nome fantasia"><Input {...set('nome')} placeholder="Ex: R8 Eventos" /></FormField>
           <FormField label="Razão social"><Input {...set('razaoSocial')} placeholder="Ex: R8 EVENTOS E PARTICIPACOES EIRELI" /></FormField>

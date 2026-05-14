@@ -91,14 +91,14 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
           ))}
           <div style={{ borderTop:'1px solid var(--border)',marginTop:4,paddingTop:14 }}>
             <div style={{ fontSize:11,color:'var(--text3)',marginBottom:5 }}>Ticket médio aprovados</div>
-            <div style={{ fontFamily:"'Syne',sans-serif",fontSize:24,fontWeight:700 }}>{fmtMoeda(stats.ticketMedio)}</div>
+            <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:24,fontWeight:700 }}>{fmtMoeda(stats.ticketMedio)}</div>
           </div>
         </Card>
       </div>
 
       <Card style={{ padding: 0 }}>
         <div style={{ padding: '18px 20px 14px', display:'flex',alignItems:'center',justifyContent:'space-between' }}>
-          <span style={{ fontFamily:"'Syne',sans-serif",fontSize:14.5,fontWeight:600 }}>Últimos orçamentos</span>
+          <span style={{ fontFamily:"'Outfit',sans-serif",fontSize:14.5,fontWeight:600 }}>Últimos orçamentos</span>
           <button onClick={onVerOrcamentos} style={{ background:'none',border:'none',cursor:'pointer',color:'var(--blue)',fontSize:13,fontWeight:500 }}>Ver todos →</button>
         </div>
         <div style={{ overflowX: 'auto' }}>

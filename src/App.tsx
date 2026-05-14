@@ -114,9 +114,9 @@ export default function App() {
       <nav style={{width:240,background:'var(--text)',minHeight:'100vh',display:'flex',flexDirection:'column',position:'fixed',left:0,top:0,bottom:0,zIndex:100,transform:(!isMobile||sidebarOpen)?'translateX(0)':'translateX(-100%)',transition:'transform .25s'}}>
         <div style={{padding:'22px 18px 18px',borderBottom:'1px solid rgba(255,255,255,0.08)'}}>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
-            <div style={{width:32,height:32,background:'#fff',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:13,color:'var(--text)'}}>OP</div>
+            <div style={{width:32,height:32,background:'#fff',borderRadius:8,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:"'Outfit',sans-serif",fontWeight:800,fontSize:13,color:'var(--text)'}}>OP</div>
             <div>
-              <div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:15,color:'#fff',letterSpacing:'-0.3px'}}>OpSuite</div>
+              <div style={{fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:15,color:'#fff',letterSpacing:'-0.3px'}}>OpSuite</div>
               <div style={{fontSize:10,color:'rgba(255,255,255,0.35)'}}>Plataforma Operacional</div>
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function App() {
           <div style={{display:'flex',alignItems:'center',gap:12}}>
             {isMobile && (<button onClick={()=>setSidebarOpen(true)} style={{width:36,height:36,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,color:'var(--text)'}}>☰</button>)}
             <div>
-              <div style={{fontFamily:"'Syne',sans-serif",fontSize:22,fontWeight:800,letterSpacing:'-0.5px'}}>{pageTitles[section]}</div>
+              <div style={{fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:800,letterSpacing:'-0.5px'}}>{pageTitles[section]}</div>
               <div style={{fontSize:13,color:'var(--text2)',marginTop:2}}>
                 {section==='dashboard'&&new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}
                 {section==='orcamentos'&&(q?`${orcamentosFiltrados.length} resultado(s) para "${busca}"` : `${orcamentos.length} orçamentos no total`)}
@@ -163,9 +163,9 @@ export default function App() {
             </div>
           </div>
           <div style={{display:'flex',alignItems:'center',gap:10}}>
-            {!isMobile && (<div style={{display:'flex',alignItems:'center',gap:8,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 12px'}}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder={`Buscar em ${pageTitles[section].toLowerCase()}...`} value={busca} onChange={e=>setBusca(e.target.value)} style={{border:'none',outline:'none',fontSize:13,fontFamily:"'DM Sans',sans-serif",color:'var(--text)',background:'transparent',width:180}} />{busca&&(<button onClick={()=>setBusca('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:16,lineHeight:1,padding:0}}>×</button>)}</div>)}
+            {!isMobile && (<div style={{display:'flex',alignItems:'center',gap:8,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 12px'}}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><input placeholder={`Buscar em ${pageTitles[section].toLowerCase()}...`} value={busca} onChange={e=>setBusca(e.target.value)} style={{border:'none',outline:'none',fontSize:13,fontFamily:"'Inter',sans-serif",color:'var(--text)',background:'transparent',width:180}} />{busca&&(<button onClick={()=>setBusca('')} style={{background:'none',border:'none',cursor:'pointer',color:'var(--text3)',fontSize:16,lineHeight:1,padding:0}}>×</button>)}</div>)}
             <div style={{width:36,height:36,borderRadius:9,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',position:'relative',fontSize:16}}>🔔{pendAlta>0&&<span style={{position:'absolute',top:7,right:8,width:6,height:6,borderRadius:'50%',background:'var(--green)',border:'1.5px solid var(--surface)'}} />}</div>
-            <button onClick={()=>{setEditOrc(null);navTo('novo-orcamento');}} style={{display:'flex',alignItems:'center',gap:7,padding:'9px 16px',borderRadius:10,background:'var(--text)',color:'#fff',border:'none',cursor:'pointer',fontSize:13.5,fontWeight:500,fontFamily:"'DM Sans',sans-serif",whiteSpace:'nowrap'}}>+ Novo orçamento</button>
+            <button onClick={()=>{setEditOrc(null);navTo('novo-orcamento');}} style={{display:'flex',alignItems:'center',gap:7,padding:'9px 16px',borderRadius:10,background:'var(--text)',color:'#fff',border:'none',cursor:'pointer',fontSize:13.5,fontWeight:500,fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap'}}>+ Novo orçamento</button>
           </div>
         </div>
         {renderContent()}
