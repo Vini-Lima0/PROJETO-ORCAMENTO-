@@ -11,6 +11,11 @@ Ao iniciar qualquer sessão, pergunte: **"Você é Lima ou Lucas?"**
 2. Ao terminar, abra um Pull Request para `main`
 3. Somente após merge na `main` o Railway faz o deploy
 
+## PROIBIDO — Nunca faça isso
+- **NUNCA crie, edite ou delete o arquivo `CLAUDE.md`** — ele já existe no `main` e qualquer alteração gera conflito de PR
+- **NUNCA commite direto na `main`**
+- **NUNCA altere `railway.toml`** sem aprovação explícita
+
 ## Repositório
 - Owner: lucasr8eventos-dotcom
 - Repo: PROJETO-ORCAMENTO-
