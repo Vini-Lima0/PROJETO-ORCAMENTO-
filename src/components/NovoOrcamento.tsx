@@ -61,6 +61,52 @@ function newLine(): LineItem {
   return { id: uuid(), descricao: '', quantidade: 1, valorUnitario: 0, periodo: '' };
 }
 
+function ProdutoSearch({ produtos, onSelect }: { produtos: Produto[]; onSelect: (p: Produto) => void }) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const ativos = produtos.filter(p => p.ativo);
+  const filtered = query
+    ? ativos.filter(p => p.nome.toLowerCase().includes(query.toLowerCase()) || p.categoria.toLowerCase().includes(query.toLowerCase()))
+    : ativos;
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div ref={ref} style={{ position:'relative' }}>
+      <input
+        value={query}
+        onChange={e => setQuery(e.target.value)}
+        onFocus={() => setOpen(true)}
+        placeholder="Buscar no catálogo..."
+        style={{ padding:'7px 10px', border:'1px solid var(--border)', borderRadius:9, fontSize:12.5, fontFamily:"'Inter',sans-serif", color:'var(--text2)', background:'var(--surface)', cursor:'text', outline:'none', width:200 }}
+      />
+      {open && filtered.length > 0 && (
+        <div style={{ position:'absolute', top:'calc(100% + 4px)', right:0, background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, zIndex:200, minWidth:260, maxHeight:220, overflowY:'auto', boxShadow:'0 4px 16px rgba(0,0,0,0.12)' }}>
+          {filtered.slice(0, 10).map((p, idx) => (
+            <div key={p.id}
+              onMouseDown={() => { onSelect(p); setQuery(''); setOpen(false); }}
+              style={{ padding:'9px 12px', fontSize:13, cursor:'pointer', borderBottom: idx < Math.min(filtered.length,10)-1 ? '1px solid var(--border)' : 'none' }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'var(--surface2)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              <div style={{ fontWeight:500, color:'var(--text)' }}>{p.nome}</div>
+              <div style={{ fontSize:11.5, color:'var(--text3)', marginTop:1 }}>{fmtMoeda(p.preco)} / {p.unidade}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const emptyCliente = (): Cliente => ({
   id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', endereco: '',
   criadoEm: format(new Date(), 'yyyy-MM-dd'),
@@ -210,10 +256,10 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         <div style={{ display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:16 }}>
           <span style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600 }}>Itens do orçamento</span>
           <div style={{ display:'flex',gap:8 }}>
-            <select onChange={e=>{if(e.target.value){addItemFromProduto(e.target.value);e.target.value=''}}} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:9,fontSize:12.5,fontFamily:"'Inter',sans-serif",color:'var(--text2)',background:'var(--surface)',cursor:'pointer',outline:'none' }}>
-              <option value="">+ Adicionar do catálogo</option>
-              {produtos.filter(p=>p.ativo).map(p=><option key={p.id} value={p.id}>{p.nome} — {fmtMoeda(p.preco)}/{p.unidade}</option>)}
-            </select>
+            <ProdutoSearch
+              produtos={produtos}
+              onSelect={p => setItens(prev => [...prev, { id: uuid(), descricao: p.nome, quantidade: 1, valorUnitario: p.preco, periodo: '' }])}
+            />
             <Btn size="sm" onClick={()=>setItens(p=>[...p,newLine()])} icon={<span>+</span>}>Item manual</Btn>
           </div>
         </div>
