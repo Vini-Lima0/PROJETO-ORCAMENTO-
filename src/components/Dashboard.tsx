@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Orcamento } from '../types';
-import { StatCard, Card, CardHeader, StatusBadge, fmtMoeda } from './ui';
+import { Card, CardHeader, StatusBadge, fmtMoeda } from './ui';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { format, getMonth, getYear } from 'date-fns';
+import { format, getMonth, getYear, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 const MONTH_NAMES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -13,13 +13,22 @@ interface Props {
   onEditar: (o: Orcamento) => void;
 }
 
+const isPrevistos = (s: string) => s === 'aguardando' || s === 'enviado' || s === 'rascunho';
+
 export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Props) {
+  const doMes = useMemo(() => {
+    const ini = startOfMonth(new Date());
+    const fim = endOfMonth(new Date());
+    return orcamentos.filter(o => {
+      const d = new Date(o.criadoEm + 'T12:00:00');
+      return d >= ini && d <= fim;
+    });
+  }, [orcamentos]);
+
   const stats = useMemo(() => {
     const aprovados = orcamentos.filter(o => o.status === 'aprovado');
-    const pendentes = orcamentos.filter(o => o.status === 'aguardando' || o.status === 'enviado');
-    const faturamento = aprovados.reduce((s, o) => s + o.total, 0);
-    const ticketMedio = aprovados.length ? faturamento / aprovados.length : 0;
-    return { total: orcamentos.length, aprovados: aprovados.length, pendentes: pendentes.length, faturamento, ticketMedio };
+    const ticketMedio = aprovados.length ? aprovados.reduce((s, o) => s + o.total, 0) / aprovados.length : 0;
+    return { ticketMedio };
   }, [orcamentos]);
 
   const monthData = useMemo(() => {
@@ -41,15 +50,19 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
 
   return (
     <div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 14, marginBottom: 22 }}>
-        <StatCard label="Faturamento do mês" value={fmtMoeda(stats.faturamento)} badge="↑ 18%" iconBg="var(--blue-bg)"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 010 3H9m0 0h5.5a1.5 1.5 0 010 3H9"/></svg>} />
-        <StatCard label="Orçamentos gerados" value={String(stats.total)} badge="↑ 7%" iconBg="var(--green-bg)"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>} />
-        <StatCard label="Aguardando resposta" value={String(stats.pendentes)} badge="↓ 3%" iconBg="var(--amber-bg)"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>} />
-        <StatCard label="Aprovados" value={String(stats.aprovados)} badge="↑ 24%" iconBg="var(--teal-bg)"
-          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" strokeWidth="2"><polyline points="20,6 9,17 4,12"/></svg>} />
+      {/* Cards de resumo do mês */}
+      <div style={{ display:'flex',gap:12,marginBottom:22,flexWrap:'wrap' }}>
+        {[
+          { label: 'Recusados',      count: doMes.filter(o=>o.status==='recusado').length,       valor: doMes.filter(o=>o.status==='recusado').reduce((s,o)=>s+o.total,0),       cor: 'var(--red)' },
+          { label: 'Previstos',      count: doMes.filter(o=>isPrevistos(o.status)).length,        valor: doMes.filter(o=>isPrevistos(o.status)).reduce((s,o)=>s+o.total,0),        cor: 'var(--amber)' },
+          { label: 'Aprovados',      count: doMes.filter(o=>o.status==='aprovado').length,        valor: doMes.filter(o=>o.status==='aprovado').reduce((s,o)=>s+o.total,0),        cor: 'var(--green)' },
+          { label: 'Total do mês',   count: doMes.length,                                         valor: doMes.reduce((s,o)=>s+o.total,0),                                         cor: 'var(--blue)' },
+        ].map(card => (
+          <div key={card.label} style={{ flex:1,minWidth:160,padding:'16px 20px',borderRadius:12,border:'1px solid var(--border)',background:'var(--surface)' }}>
+            <div style={{ fontSize:12,color:'var(--text3)',marginBottom:8 }}>{card.label} ({card.count})</div>
+            <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:22,fontWeight:700,color:card.cor }}>{fmtMoeda(card.valor)}</div>
+          </div>
+        ))}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16, marginBottom: 16 }}>
@@ -77,9 +90,9 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
         <Card>
           <CardHeader title="Taxa de conversão" />
           {[
-            { label: 'Aprovados', pct: stats.total ? Math.round(stats.aprovados/stats.total*100) : 0, color: 'var(--green)' },
-            { label: 'Pendentes', pct: stats.total ? Math.round(stats.pendentes/stats.total*100) : 0, color: 'var(--amber)' },
-            { label: 'Recusados', pct: stats.total ? Math.round(orcamentos.filter(o=>o.status==='recusado').length/stats.total*100) : 0, color: 'var(--red)' },
+            { label: 'Aprovados', pct: orcamentos.length ? Math.round(orcamentos.filter(o=>o.status==='aprovado').length/orcamentos.length*100) : 0, color: 'var(--green)' },
+            { label: 'Previstos', pct: orcamentos.length ? Math.round(orcamentos.filter(o=>isPrevistos(o.status)).length/orcamentos.length*100) : 0, color: 'var(--amber)' },
+            { label: 'Recusados', pct: orcamentos.length ? Math.round(orcamentos.filter(o=>o.status==='recusado').length/orcamentos.length*100) : 0, color: 'var(--red)' },
           ].map(r => (
             <div key={r.label} style={{ display:'flex',alignItems:'center',marginBottom:14 }}>
               <span style={{ fontSize:12.5,color:'var(--text2)',width:80,flexShrink:0 }}>{r.label}</span>
@@ -91,7 +104,7 @@ export default function Dashboard({ orcamentos, onVerOrcamentos, onEditar }: Pro
           ))}
           <div style={{ borderTop:'1px solid var(--border)',marginTop:4,paddingTop:14 }}>
             <div style={{ fontSize:11,color:'var(--text3)',marginBottom:5 }}>Ticket médio aprovados</div>
-            <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:24,fontWeight:700 }}>{fmtMoeda(stats.ticketMedio)}</div>
+            <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:24,fontWeight:700 }}>{fmtMoeda(stats.ticketMedio || 0)}</div>
           </div>
         </Card>
       </div>
