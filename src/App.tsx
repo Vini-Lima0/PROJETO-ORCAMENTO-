@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import './index.css';
 import { Section, Orcamento, Cliente, Produto, Evento, Usuario } from './types';
 import { loadData, saveData, calcularTotais, clientesIniciais, produtosIniciais, orcamentosIniciais, eventosIniciais, usuariosIniciais } from './data';
@@ -73,6 +74,20 @@ export default function App() {
     navTo('orcamentos');
   };
 
+  const duplicarOrc = (orc: Orcamento) => {
+    const nums = orcamentos.map(o => parseInt(o.numero.replace('ORÇ-', ''), 10)).filter(n => !isNaN(n));
+    const next = nums.length ? Math.max(...nums) + 1 : 1;
+    const novo: Orcamento = {
+      ...orc,
+      id: crypto.randomUUID(),
+      numero: `ORÇ-${String(next).padStart(4, '0')}`,
+      status: 'rascunho',
+      criadoEm: format(new Date(), 'yyyy-MM-dd'),
+      itens: orc.itens.map(i => ({ ...i, id: crypto.randomUUID() })),
+    };
+    setOrcamentos(p => [novo, ...p]);
+  };
+
   const saveUsuario = (u: Usuario) => {
     setUsuarios(p => { const i=p.findIndex(x=>x.id===u.id); if(i>=0){const n=[...p];n[i]=u;return n;} return [u,...p]; });
     if (user && u.id === user.id) setUser(u);
@@ -97,7 +112,7 @@ export default function App() {
   const renderContent = () => {
     switch(section) {
       case 'dashboard': return <Dashboard orcamentos={orcamentos} onVerOrcamentos={()=>navTo('orcamentos')} onEditar={o=>{setEditOrc(o);navTo('novo-orcamento');}} />;
-      case 'orcamentos': return <Orcamentos orcamentos={orcamentosFiltrados} clientes={clientes} onNovo={()=>{setEditOrc(null);navTo('novo-orcamento');}} onEditar={o=>{setEditOrc(o);navTo('novo-orcamento');}} onDelete={id=>setOrcamentos(p=>p.filter(o=>o.id!==id))} onStatusChange={(id,status)=>setOrcamentos(p=>p.map(o=>o.id===id?{...o,status}:o))} />;
+      case 'orcamentos': return <Orcamentos orcamentos={orcamentosFiltrados} clientes={clientes} onNovo={()=>{setEditOrc(null);navTo('novo-orcamento');}} onEditar={o=>{setEditOrc(o);navTo('novo-orcamento');}} onDelete={id=>setOrcamentos(p=>p.filter(o=>o.id!==id))} onStatusChange={(id,status)=>setOrcamentos(p=>p.map(o=>o.id===id?{...o,status}:o))} onDuplicar={duplicarOrc} />;
       case 'novo-orcamento': return <NovoOrcamento orcamento={editOrc} clientes={clientes} produtos={produtos} proximoNumero={proximoNumero} onSalvar={saveOrc} onCancelar={()=>navTo('orcamentos')} onSalvarCliente={c=>setClientes(p=>{const i=p.findIndex(x=>x.id===c.id);if(i>=0){const n=[...p];n[i]=c;return n;}return[c,...p];})} />;
       case 'clientes': return <Clientes clientes={clientesFiltrados} onSalvar={c=>{setClientes(p=>{const i=p.findIndex(x=>x.id===c.id);if(i>=0){const n=[...p];n[i]=c;return n;}return[c,...p];});}} onDelete={id=>setClientes(p=>p.filter(c=>c.id!==id))} />;
       case 'produtos': return <Produtos produtos={produtosFiltrados} onSalvar={p=>{setProdutos(prev=>{const i=prev.findIndex(x=>x.id===p.id);if(i>=0){const n=[...prev];n[i]=p;return n;}return[p,...prev];});}} onDelete={id=>setProdutos(p=>p.filter(x=>x.id!==id))} />;
