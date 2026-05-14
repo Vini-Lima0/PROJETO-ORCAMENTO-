@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale';
 
 interface Props {
   ordens: OS[];
+  userRole: 'admin' | 'operacional';
   onSalvar: (os: OS) => void;
   onDelete: (id: string) => void;
   filtroVendaId?: string | null;
@@ -38,7 +39,8 @@ const textareaStyle: React.CSSProperties = {
   ...inp, resize: 'vertical' as const, minHeight: 72,
 };
 
-export default function OrdemServico({ ordens, onSalvar, onDelete, filtroVendaId, onLimparFiltro }: Props) {
+export default function OrdemServico({ ordens, userRole, onSalvar, onDelete, filtroVendaId, onLimparFiltro }: Props) {
+  const isAdmin = userRole === 'admin';
   const [filtroStatus, setFiltroStatus] = useState<OSStatus | 'todos'>('todos');
   const [busca, setBusca] = useState('');
   const [editId, setEditId] = useState<string | null>(null);
@@ -122,7 +124,7 @@ export default function OrdemServico({ ordens, onSalvar, onDelete, filtroVendaId
               <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>Total ({base.length})</div>
               <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, color: 'var(--text)' }}>Todas as OS</div>
             </button>
-            {(['pendente', 'em_andamento', 'concluida'] as OSStatus[]).map(s => (
+            {(['pendente', 'em_andamento', 'concluida', 'cancelada'] as OSStatus[]).map(s => (
               <button key={s} style={cardStyle(s)} onClick={() => setFiltroStatus(filtroStatus === s ? 'todos' : s)}>
                 <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4 }}>{statusMap[s].label} ({base.filter(o => o.status === s).length})</div>
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, color: statusMap[s].color }}>
@@ -224,13 +226,17 @@ export default function OrdemServico({ ordens, onSalvar, onDelete, filtroVendaId
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
               🖨️ Imprimir OS
             </button>
-            <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
-            <button onClick={() => { setConfirmDelete(menuOpen); setMenuOpen(null); }}
-              style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--red)' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-              🗑️ Excluir OS
-            </button>
+            {isAdmin && (
+              <>
+                <div style={{ borderTop: '1px solid var(--border)', margin: '4px 0' }} />
+                <button onClick={() => { setConfirmDelete(menuOpen); setMenuOpen(null); }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 12px', border: 'none', background: 'none', cursor: 'pointer', fontSize: 13, borderRadius: 7, color: 'var(--red)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  🗑️ Excluir OS
+                </button>
+              </>
+            )}
           </div>
         </>
       )}

@@ -251,6 +251,7 @@ export default function App() {
       case 'ordens-servico':
         return <OrdemServicoComp
           ordens={ordens}
+          userRole={user.role}
           onSalvar={os => setOrdens(p => { const i = p.findIndex(x => x.id === os.id); if (i >= 0) { const n = [...p]; n[i] = os; return n; } return [os, ...p]; })}
           onDelete={id => setOrdens(p => p.filter(o => o.id !== id))}
           filtroVendaId={filtroOsVendaId}

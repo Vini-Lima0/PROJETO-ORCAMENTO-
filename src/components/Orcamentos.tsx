@@ -26,6 +26,7 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
   const [filtroCard, setFiltroCard] = useState<FiltroCard>('todos');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState({ top: 0, right: 0 });
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const openMenu = (id: string, e: React.MouseEvent<HTMLButtonElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -71,8 +72,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
     ? { ...cardBase, borderColor: 'var(--blue)', boxShadow: '0 0 0 2px rgba(59,130,246,0.15)' }
     : cardBase;
 
-  const handleImprimir = () => window.print();
-
   return (
     <div>
       {/* Topo: período + busca + botões */}
@@ -97,10 +96,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         </div>
 
         <div style={{ marginLeft:'auto',display:'flex',gap:8 }}>
-          <button onClick={handleImprimir}
-            style={{ display:'flex',alignItems:'center',gap:6,padding:'9px 16px',borderRadius:10,border:'1px solid var(--border)',background:'var(--surface)',cursor:'pointer',fontSize:13.5,fontWeight:500,fontFamily:"'Inter',sans-serif",color:'var(--text)' }}>
-            🖨️ Imprimir
-          </button>
           <button onClick={onNovo}
             style={{ display:'flex',alignItems:'center',gap:7,padding:'9px 16px',borderRadius:10,background:'var(--text)',color:'#fff',border:'none',cursor:'pointer',fontSize:13.5,fontWeight:500,fontFamily:"'Inter',sans-serif",whiteSpace:'nowrap' }}>
             + Novo orçamento
@@ -191,6 +186,34 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         )}
       </div>
 
+      {/* Confirm delete orçamento */}
+      {confirmDelete && (() => {
+        const temVenda = vendas.some(v => v.orcamentoId === confirmDelete);
+        const orc = orcamentos.find(o => o.id === confirmDelete);
+        return (
+          <div style={{ position:'fixed',inset:0,background:'rgba(0,0,0,0.45)',zIndex:300,display:'flex',alignItems:'center',justifyContent:'center',padding:16 }}>
+            <div style={{ background:'var(--surface)',borderRadius:14,padding:28,maxWidth:400,width:'100%',boxShadow:'0 20px 60px rgba(0,0,0,0.25)',textAlign:'center' }}>
+              <div style={{ fontSize:32,marginBottom:12 }}>🗑️</div>
+              <div style={{ fontFamily:"'Outfit',sans-serif",fontWeight:700,fontSize:18,marginBottom:8 }}>Excluir orçamento?</div>
+              <div style={{ fontSize:13,color:'var(--text3)',marginBottom: temVenda ? 12 : 24 }}>
+                {orc?.numero} · {orc?.clienteNome}
+              </div>
+              {temVenda && (
+                <div style={{ padding:'10px 14px',background:'rgba(245,158,11,0.08)',border:'1px solid rgba(245,158,11,0.25)',borderRadius:9,marginBottom:20,fontSize:12.5,color:'var(--amber)',textAlign:'left' }}>
+                  ⚠️ Este orçamento já gerou uma venda. A exclusão do orçamento <strong>não remove</strong> a venda e a OS vinculadas.
+                </div>
+              )}
+              <div style={{ display:'flex',gap:10,justifyContent:'center' }}>
+                <button onClick={()=>setConfirmDelete(null)}
+                  style={{ padding:'9px 20px',borderRadius:9,border:'1px solid var(--border)',background:'none',cursor:'pointer',fontSize:13,color:'var(--text)' }}>Cancelar</button>
+                <button onClick={()=>{ onDelete(confirmDelete); setConfirmDelete(null); }}
+                  style={{ padding:'9px 20px',borderRadius:9,border:'none',background:'var(--red)',color:'#fff',cursor:'pointer',fontSize:13,fontWeight:600 }}>Excluir</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Menu de ações */}
       {menuOpen && (
         <>
@@ -219,7 +242,7 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
               📋 Duplicar orçamento
             </button>
             <div style={{ borderTop:'1px solid var(--border)',margin:'4px 0' }} />
-            <button onClick={()=>{if(menuOpen)onDelete(menuOpen);setMenuOpen(null);}}
+            <button onClick={()=>{ setConfirmDelete(menuOpen); setMenuOpen(null); }}
               style={{ display:'block',width:'100%',textAlign:'left',padding:'8px 12px',border:'none',background:'none',cursor:'pointer',fontSize:13,borderRadius:7,color:'var(--red)' }}
               onMouseEnter={e=>(e.currentTarget.style.background='var(--red-bg)')}
               onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>
