@@ -1,14 +1,19 @@
 # OpSuite — Instruções para o Claude Code
 
+## IMPORTANTE — Primeira ação de cada sessão
+Ao iniciar qualquer sessão, pergunte: **"Você é Lima ou Lucas?"**
+- Se **Lima** → trabalhe na branch `feature/lima`
+- Se **Lucas** → trabalhe na branch `feature/lucas`
+- NUNCA desenvolva direto na `main`
+
+## Fluxo obrigatório
+1. Todas as alterações vão para a branch do usuário (`feature/lima` ou `feature/lucas`)
+2. Ao terminar, abra um Pull Request para `main`
+3. Somente após merge na `main` o Railway faz o deploy
+
 ## Repositório
 - Owner: lucasr8eventos-dotcom
 - Repo: PROJETO-ORCAMENTO-
-
-## Regras de branch
-- NUNCA commitar direto na `main`
-- Lima trabalha na branch: `feature/lima`
-- Lucas trabalha na branch: `feature/lucas`
-- Sempre desenvolver na branch do usuário atual e abrir Pull Request para `main`
 
 ## Stack
 - React 19 + TypeScript
