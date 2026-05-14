@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 const statusConfig = {
   aprovado:  { label: 'Aprovado',   bg: 'var(--green-bg)', color: 'var(--green)' },
@@ -126,3 +126,83 @@ export function Avatar({ name, size=38 }: { name:string; size?:number }) {
 }
 
 export const fmtMoeda = (v: number) => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+export function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v: number) => void; style?: React.CSSProperties }) {
+  const [focused, setFocused] = useState(false);
+  const [raw, setRaw] = useState('');
+  const ref = useRef<HTMLInputElement>(null);
+  const display = focused ? raw : value === 0 ? '' : fmtMoeda(value);
+  const handleFocus = () => { setRaw(Math.round(value * 100) === 0 ? '' : String(Math.round(value * 100))); setFocused(true); };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '');
+    setRaw(digits);
+    onChange(parseInt(digits || '0', 10) / 100);
+  };
+  return (
+    <input ref={ref} value={display} onChange={handleChange} onFocus={handleFocus} onBlur={()=>{setFocused(false);setRaw('');}}
+      placeholder="R$ 0,00" inputMode="numeric"
+      style={{ ...inputStyle, ...style }} />
+  );
+}
+
+function fmtCpf(d: string) {
+  if (d.length <= 3) return d;
+  if (d.length <= 6) return `${d.slice(0,3)}.${d.slice(3)}`;
+  if (d.length <= 9) return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6)}`;
+  return `${d.slice(0,3)}.${d.slice(3,6)}.${d.slice(6,9)}-${d.slice(9,11)}`;
+}
+function fmtCnpj(d: string) {
+  if (d.length <= 2) return d;
+  if (d.length <= 5) return `${d.slice(0,2)}.${d.slice(2)}`;
+  if (d.length <= 8) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5)}`;
+  if (d.length <= 12) return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8)}`;
+  return `${d.slice(0,2)}.${d.slice(2,5)}.${d.slice(5,8)}/${d.slice(8,12)}-${d.slice(12,14)}`;
+}
+
+export function CpfCnpjInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, '').slice(0, 14);
+    onChange(digits.length <= 11 ? fmtCpf(digits) : fmtCnpj(digits));
+  };
+  return (
+    <input value={value} onChange={handleChange} inputMode="numeric" placeholder="CPF ou CNPJ"
+      style={inputStyle} />
+  );
+}
+
+export function TelefoneInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const d = e.target.value.replace(/\D/g, '').slice(0, 11);
+    let fmt = d;
+    if (d.length > 2)  fmt = `(${d.slice(0,2)}) ${d.slice(2)}`;
+    if (d.length > 7)  fmt = `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+    if (d.length <= 10 && d.length > 6) fmt = `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+    onChange(fmt);
+  };
+  return (
+    <input value={value} onChange={handleChange} inputMode="tel" placeholder="(00) 00000-0000"
+      style={inputStyle} />
+  );
+}
+
+export function DataInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const toDisplay = (iso: string) => {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  };
+  const [text, setText] = useState(toDisplay(value));
+  useEffect(() => { setText(toDisplay(value)); }, [value]);
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const d = e.target.value.replace(/\D/g, '').slice(0, 8);
+    let fmt = d;
+    if (d.length > 2) fmt = `${d.slice(0,2)}/${d.slice(2)}`;
+    if (d.length > 4) fmt = `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
+    setText(fmt);
+    if (d.length === 8) onChange(`${d.slice(4,8)}-${d.slice(2,4)}-${d.slice(0,2)}`);
+  };
+  return (
+    <input value={text} onChange={handleChange} inputMode="numeric" placeholder="dd/mm/aaaa"
+      style={inputStyle} />
+  );
+}

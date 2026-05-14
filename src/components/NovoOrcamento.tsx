@@ -1,46 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Orcamento, LineItem, OrcamentoStatus, Cliente, Produto } from '../types';
-import { Card, FormField, Input, Select, Textarea, Btn, StatusBadge, fmtMoeda, Modal } from './ui';
+import { Card, FormField, Input, Select, Textarea, Btn, StatusBadge, fmtMoeda, Modal, CurrencyInput, CpfCnpjInput, TelefoneInput, DataInput } from './ui';
 import { gerarPDF } from '../pdfGenerator';
 import { loadConfig } from './Configuracoes';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { v4 as uuid } from 'uuid';
 
-function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v: number) => void; style?: React.CSSProperties }) {
-  const [focused, setFocused] = useState(false);
-  const [raw, setRaw] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const display = focused ? raw : value === 0 ? '' : fmtMoeda(value);
-
-  const handleFocus = () => {
-    const cents = Math.round(value * 100);
-    setRaw(cents === 0 ? '' : String(cents));
-    setFocused(true);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value.replace(/\D/g, '');
-    setRaw(digits);
-    onChange(parseInt(digits || '0', 10) / 100);
-  };
-
-  const handleBlur = () => { setFocused(false); setRaw(''); };
-
-  return (
-    <input
-      ref={inputRef}
-      value={display}
-      onChange={handleChange}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
-      placeholder="R$ 0,00"
-      inputMode="numeric"
-      style={{ padding:'7px 10px', border:'1px solid var(--border)', borderRadius:8, fontSize:13, fontFamily:"'Inter',sans-serif", outline:'none', color:'var(--text)', background:'var(--surface)', width:'100%', ...style }}
-    />
-  );
-}
 
 function ClienteSearch({ clientes, value, onChange }: { clientes: Cliente[]; value: string; onChange: (id: string) => void }) {
   const [query, setQuery] = useState('');
@@ -96,7 +62,7 @@ function newLine(): LineItem {
 }
 
 const emptyCliente = (): Cliente => ({
-  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', cpf: '', endereco: '',
+  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', endereco: '',
   criadoEm: format(new Date(), 'yyyy-MM-dd'),
 });
 
@@ -219,7 +185,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
             <Input value={contato} onChange={e=>setContato(e.target.value)} placeholder="Nome do contato" />
           </FormField>
           <FormField label="Validade do orçamento">
-            <Input type="date" value={validade} onChange={e=>setValidade(e.target.value)} />
+            <DataInput value={validade} onChange={setValidade} />
           </FormField>
           <FormField label="Status">
             <Select value={status} onChange={e=>setStatus(e.target.value as OrcamentoStatus)}>
@@ -319,9 +285,8 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
           <FormField label="Nome *"><Input value={novoClienteForm.nome} onChange={e=>setNovoClienteForm({...novoClienteForm,nome:e.target.value})} placeholder="Nome completo ou razão social" /></FormField>
           <FormField label="E-mail"><Input type="email" value={novoClienteForm.email} onChange={e=>setNovoClienteForm({...novoClienteForm,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
-          <FormField label="Telefone"><Input value={novoClienteForm.telefone} onChange={e=>setNovoClienteForm({...novoClienteForm,telefone:e.target.value})} placeholder="(11) 99999-9999" /></FormField>
-          <FormField label="CNPJ"><Input value={novoClienteForm.cnpj} onChange={e=>setNovoClienteForm({...novoClienteForm,cnpj:e.target.value})} placeholder="00.000.000/0001-00" /></FormField>
-          <FormField label="CPF"><Input value={novoClienteForm.cpf} onChange={e=>setNovoClienteForm({...novoClienteForm,cpf:e.target.value})} placeholder="000.000.000-00" /></FormField>
+          <FormField label="Telefone"><TelefoneInput value={novoClienteForm.telefone} onChange={v=>setNovoClienteForm({...novoClienteForm,telefone:v})} /></FormField>
+          <FormField label="CPF / CNPJ"><CpfCnpjInput value={novoClienteForm.cnpj} onChange={v=>setNovoClienteForm({...novoClienteForm,cnpj:v})} /></FormField>
         </div>
         <FormField label="Endereço" style={{ marginBottom:20 }}><Input value={novoClienteForm.endereco} onChange={e=>setNovoClienteForm({...novoClienteForm,endereco:e.target.value})} placeholder="Rua, número, cidade/estado" /></FormField>
         <div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Produto } from '../types';
-import { Card, Btn, FormField, Input, Select, Modal, Tabs, fmtMoeda } from './ui';
+import { Card, Btn, FormField, Input, Select, Modal, Tabs, fmtMoeda, CurrencyInput } from './ui';
 import { v4 as uuid } from 'uuid';
 
 interface Props {
@@ -111,7 +111,7 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
             </Select>
           </FormField>
           <FormField label="Unidade"><Input value={form.unidade} onChange={e=>setForm({...form,unidade:e.target.value})} placeholder="diária, hora, unidade..." /></FormField>
-          <FormField label="Preço"><Input type="number" value={form.preco} min={0} step={0.01} onChange={e=>setForm({...form,preco:parseFloat(e.target.value)||0})} /></FormField>
+          <FormField label="Preço"><CurrencyInput value={form.preco} onChange={v=>setForm({...form,preco:v})} /></FormField>
           {form.tipo === 'produto' && (
             <FormField label="Estoque"><Input type="number" value={form.estoque??0} min={0} onChange={e=>setForm({...form,estoque:parseInt(e.target.value)||0})} /></FormField>
           )}

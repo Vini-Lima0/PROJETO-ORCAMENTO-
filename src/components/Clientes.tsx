@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Cliente } from '../types';
-import { Card, Avatar, Btn, FormField, Input, Modal } from './ui';
+import { Card, Avatar, Btn, FormField, Input, Modal, CpfCnpjInput, TelefoneInput } from './ui';
 import { v4 as uuid } from 'uuid';
 import { format } from 'date-fns';
 
@@ -11,7 +11,7 @@ interface Props {
 }
 
 const empty = (): Cliente => ({
-  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', cpf: '', endereco: '',
+  id: '', nome: '', email: '', telefone: '', empresa: '', cnpj: '', endereco: '',
   criadoEm: format(new Date(), 'yyyy-MM-dd'),
 });
 
@@ -75,9 +75,8 @@ export default function Clientes({ clientes, onSalvar, onDelete }: Props) {
         <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
           <FormField label="Nome *"><Input value={form.nome} onChange={e=>setForm({...form,nome:e.target.value})} placeholder="Nome completo ou razão social" /></FormField>
           <FormField label="E-mail"><Input type="email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} placeholder="email@empresa.com" /></FormField>
-          <FormField label="Telefone"><Input value={form.telefone} onChange={e=>setForm({...form,telefone:e.target.value})} placeholder="(11) 99999-9999" /></FormField>
-          <FormField label="CNPJ"><Input value={form.cnpj} onChange={e=>setForm({...form,cnpj:e.target.value})} placeholder="00.000.000/0001-00" /></FormField>
-          <FormField label="CPF"><Input value={form.cpf||''} onChange={e=>setForm({...form,cpf:e.target.value})} placeholder="000.000.000-00" /></FormField>
+          <FormField label="Telefone"><TelefoneInput value={form.telefone} onChange={v=>setForm({...form,telefone:v})} /></FormField>
+          <FormField label="CPF / CNPJ"><CpfCnpjInput value={form.cnpj} onChange={v=>setForm({...form,cnpj:v})} /></FormField>
         </div>
         <FormField label="Endereço" style={{ marginBottom:14 }}><Input value={form.endereco} onChange={e=>setForm({...form,endereco:e.target.value})} placeholder="Rua, número, cidade/estado" /></FormField>
         <div style={{ display:'flex',gap:8,justifyContent:'flex-end' }}>
