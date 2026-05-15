@@ -267,7 +267,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           {itens.map((item, idx) => (
             <div key={item.id} style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 0.8fr 0.8fr 36px',gap:8,padding:'8px 12px',borderBottom: idx < itens.length-1 ? '1px solid var(--border)' : 'none',alignItems:'center' }}>
               <input value={item.descricao} onChange={e=>updateItem(item.id,'descricao',e.target.value)} placeholder="Descrição do item..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
-              <input type="number" value={item.quantidade} min={1} onChange={e=>updateItem(item.id,'quantidade',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
+              <input inputMode="numeric" value={String(item.quantidade)} onChange={e=>{ const v=e.target.value.replace(/\D/g,'').replace(/^0+(\d)/,'$1'); updateItem(item.id,'quantidade',parseInt(v||'1',10)||1); }} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
               <CurrencyInput value={item.valorUnitario} onChange={v=>updateItem(item.id,'valorUnitario',v)} />
               <input value={item.periodo||''} onChange={e=>updateItem(item.id,'periodo',e.target.value)} placeholder="ex: 3 dias, 2 semanas..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
               <span style={{ fontSize:13,fontWeight:600,textAlign:'right',paddingRight:4,whiteSpace:'nowrap' }}>{fmtMoeda(item.quantidade*item.valorUnitario)}</span>
@@ -282,13 +282,14 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
         <Card>
-          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Detalhes do orçamento</div>
+          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:4 }}>Detalhes do orçamento</div>
+          <div style={{ fontSize:12,color:'var(--text3)',marginBottom:12 }}>Condições de pagamento, prazos, notas internas...</div>
           <Textarea
-            rows={7}
+            rows={9}
             value={observacoes}
             onChange={e=>setObservacoes(e.target.value)}
-            placeholder={"Condições de pagamento, prazo de entrega, notas...\n\nPressione Enter para nova linha."}
-            style={{ resize:'vertical' }}
+            placeholder={"Ex:\n• Pagamento: 50% entrada + 50% na entrega\n• Prazo de execução: 5 dias úteis\n• Validade desta proposta: 14 dias"}
+            style={{ resize:'vertical', minHeight: 180, lineHeight: 1.7, fontSize: 13.5 }}
           />
         </Card>
 

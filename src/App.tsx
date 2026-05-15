@@ -390,18 +390,19 @@ export default function App() {
           </div>
         </div>
         <div style={{ padding: '12px 10px 4px', flex: 1, overflowY: 'auto' }}>
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '6px 8px 4px' }}>COMERCIAL</div>
           <NavItem label="Dashboard" icon="⊞" active={section === 'dashboard'} onClick={() => navTo('dashboard')} />
           <NavItem label="Orçamentos" icon="📄" active={section === 'orcamentos' || section === 'novo-orcamento'} onClick={() => navTo('orcamentos')} badge={pendOrc || undefined} />
-          <NavItem label="Clientes" icon="👥" active={section === 'clientes'} onClick={() => navTo('clientes')} />
-          <NavItem label="Produtos" icon="📦" active={section === 'produtos'} onClick={() => navTo('produtos')} />
-          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>COMERCIAL</div>
           <NavItem label="Vendas" icon="💰" active={section === 'vendas'} onClick={() => navTo('vendas')} badge={pendVendas || undefined} />
-          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>OPERACIONAL</div>
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>OPERAÇÃO</div>
           <NavItem label="Ordens de Serviço" icon="🔧" active={section === 'ordens-servico'} onClick={() => navTo('ordens-servico')} badge={pendOS || undefined} />
           <NavItem label="Agenda" icon="📅" active={section === 'agenda'} onClick={() => navTo('agenda')} dot />
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>CADASTROS</div>
+          <NavItem label="Clientes" icon="👥" active={section === 'clientes'} onClick={() => navTo('clientes')} />
+          <NavItem label="Produtos" icon="📦" active={section === 'produtos'} onClick={() => navTo('produtos')} />
           <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>SISTEMA</div>
-          {user.role === 'admin' && <NavItem label="Usuários" icon="👤" active={section === 'usuarios'} onClick={() => navTo('usuarios')} />}
           <NavItem label="Configurações" icon="⚙" active={section === 'configuracoes'} onClick={() => navTo('configuracoes')} />
+          {user.role === 'admin' && <NavItem label="Usuários" icon="👤" active={section === 'usuarios'} onClick={() => navTo('usuarios')} />}
         </div>
         <div style={{ padding: '14px 10px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 9 }}>
