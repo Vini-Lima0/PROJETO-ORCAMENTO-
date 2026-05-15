@@ -58,6 +58,7 @@ export const orcamentosApi = {
 export const vendasApi = {
   listar: () => get<any[]>('/api/vendas'),
   criar:  (d: any) => post<any>('/api/vendas', d),
+  atualizar: (id: string, d: any) => put<any>(`/api/vendas/${id}`, d),
   adicionarPagamento: (vendaId: string, d: any) => post<any>(`/api/vendas/${vendaId}/pagamentos`, d),
   togglePagamento:    (pgId: string, pago: boolean) => patch<any>(`/api/vendas/pagamentos/${pgId}`, { pago }),
   deletar: (id: string) => del(`/api/vendas/${id}`),
