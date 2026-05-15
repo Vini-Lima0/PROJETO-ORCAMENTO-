@@ -278,4 +278,5 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
   doc.text('Página 1 de 1', W - M, pageH - 7, { align: 'right' });
 
   doc.save(`${orc.numero}.pdf`);
+  return doc.output('datauristring').split(',')[1];
 }

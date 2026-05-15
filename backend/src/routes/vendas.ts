@@ -81,6 +81,29 @@ router.patch('/pagamentos/:pgId', async (req: AuthRequest, res: Response) => {
   res.json(pg);
 });
 
+router.put('/:id', async (req: AuthRequest, res: Response) => {
+  const { contato, observacoes, pagamentos = [], situacao } = req.body;
+  try {
+    await prisma.pagamentoVenda.deleteMany({ where: { vendaId: req.params.id } });
+    const v = await prisma.venda.update({
+      where: { id: req.params.id },
+      data: {
+        contato: contato ?? undefined,
+        observacoes: observacoes ?? undefined,
+        situacao: situacao ?? undefined,
+        pagamentos: {
+          create: pagamentos.map((p: any) => ({
+            descricao: p.descricao || '', valor: Number(p.valor) || 0,
+            vencimento: p.vencimento || '', pago: p.pago === true,
+          })),
+        },
+      },
+      include: { pagamentos: true },
+    });
+    res.json(v);
+  } catch { res.status(404).json({ erro: 'Venda não encontrada' }); }
+});
+
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
     await prisma.venda.delete({ where: { id: req.params.id } });

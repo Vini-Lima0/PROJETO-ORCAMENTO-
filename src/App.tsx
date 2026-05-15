@@ -333,7 +333,12 @@ export default function App() {
           }} />;
       case 'vendas':
         return <Vendas vendas={vendas} userRole={user.role}
-          onSalvar={v => setVendas(p => { const i = p.findIndex(x => x.id === v.id); if (i >= 0) { const n = [...p]; n[i] = v; return n; } return [v, ...p]; })}
+          onSalvar={async v => {
+            try {
+              const salva = await vendasApi.atualizar(v.id, v);
+              setVendas(p => { const i = p.findIndex(x => x.id === salva.id); if (i >= 0) { const n = [...p]; n[i] = normalizeVenda(salva); return n; } return [normalizeVenda(salva), ...p]; });
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
           onDelete={async id => {
             try {
               await vendasApi.deletar(id);
