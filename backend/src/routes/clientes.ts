@@ -17,14 +17,16 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 });
 
 router.post('/', async (req: AuthRequest, res: Response) => {
-  const { nome, email, telefone, empresa, cnpj, cpf, endereco, criadoEm } = req.body;
+  const { id, nome, email, telefone, empresa, cnpj, cpf, endereco, criadoEm } = req.body;
   if (!nome) { res.status(400).json({ erro: 'Nome obrigatório' }); return; }
-  const c = await prisma.cliente.create({
-    data: { nome, email: email || '', telefone: telefone || '', empresa: empresa || '',
-            cnpj: cnpj || '', cpf: cpf || '', endereco: endereco || '',
-            criadoEm: criadoEm || new Date().toISOString().slice(0, 10) },
-  });
-  res.status(201).json(c);
+  try {
+    const c = await prisma.cliente.create({
+      data: { ...(id ? { id } : {}), nome, email: email || '', telefone: telefone || '',
+              empresa: empresa || '', cnpj: cnpj || '', cpf: cpf || '', endereco: endereco || '',
+              criadoEm: criadoEm || new Date().toISOString().slice(0, 10) },
+    });
+    res.status(201).json(c);
+  } catch (e: any) { res.status(500).json({ erro: e.message || 'Erro ao criar cliente' }); }
 });
 
 router.put('/:id', async (req: AuthRequest, res: Response) => {

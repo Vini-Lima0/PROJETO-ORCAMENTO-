@@ -44,23 +44,25 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   const numero = proximoNumero(ultimo?.numero ?? null);
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
 
-  const o = await prisma.orcamento.create({
-    data: {
-      numero, clienteId, clienteNome: clienteNome || '', contato: contato || '',
-      status: status || 'rascunho', desconto: Number(desconto), impostos: Number(impostos),
-      observacoes: observacoes || '', validade: validade || '',
-      criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
-      subtotal, total,
-      itens: {
-        create: itens.map((i: any) => ({
-          descricao: i.descricao, quantidade: Number(i.quantidade),
-          valorUnitario: Number(i.valorUnitario), periodo: i.periodo || null,
-        })),
+  try {
+    const o = await prisma.orcamento.create({
+      data: {
+        numero, clienteId, clienteNome: clienteNome || '', contato: contato || '',
+        status: status || 'rascunho', desconto: Number(desconto), impostos: Number(impostos),
+        observacoes: observacoes || '', validade: validade || '',
+        criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
+        subtotal, total,
+        itens: {
+          create: itens.map((i: any) => ({
+            descricao: i.descricao, quantidade: Number(i.quantidade),
+            valorUnitario: Number(i.valorUnitario), periodo: i.periodo || null,
+          })),
+        },
       },
-    },
-    include: { itens: true },
-  });
-  res.status(201).json(o);
+      include: { itens: true },
+    });
+    res.status(201).json(o);
+  } catch (e: any) { res.status(500).json({ erro: e.message || 'Erro ao criar orçamento' }); }
 });
 
 router.put('/:id', async (req: AuthRequest, res: Response) => {
@@ -94,7 +96,9 @@ router.patch('/:id/status', async (req: AuthRequest, res: Response) => {
   const { status } = req.body;
   if (!status) { res.status(400).json({ erro: 'Status obrigatório' }); return; }
   try {
-    const o = await prisma.orcamento.update({ where: { id: req.params.id }, data: { status } });
+    const o = await prisma.orcamento.update({
+      where: { id: req.params.id }, data: { status }, include: { itens: true },
+    });
     res.json(o);
   } catch { res.status(404).json({ erro: 'Orçamento não encontrado' }); }
 });

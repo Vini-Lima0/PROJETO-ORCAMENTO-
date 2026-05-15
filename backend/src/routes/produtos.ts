@@ -19,14 +19,16 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
 router.post('/', async (req: AuthRequest, res: Response) => {
   const { nome, categoria, preco, unidade, estoque, tipo, ativo } = req.body;
   if (!nome) { res.status(400).json({ erro: 'Nome obrigatório' }); return; }
-  const p = await prisma.produto.create({
-    data: {
-      nome, categoria: categoria || '', preco: Number(preco) || 0,
-      unidade: unidade || 'unidade', estoque: estoque != null ? Number(estoque) : null,
-      tipo: tipo || 'produto', ativo: ativo !== false,
-    },
-  });
-  res.status(201).json(p);
+  try {
+    const p = await prisma.produto.create({
+      data: {
+        nome, categoria: categoria || '', preco: Number(preco) || 0,
+        unidade: unidade || 'unidade', estoque: estoque != null ? Number(estoque) : null,
+        tipo: tipo || 'produto', ativo: ativo !== false,
+      },
+    });
+    res.status(201).json(p);
+  } catch (e: any) { res.status(500).json({ erro: e.message || 'Erro ao criar produto' }); }
 });
 
 router.put('/:id', async (req: AuthRequest, res: Response) => {
