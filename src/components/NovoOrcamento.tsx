@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Orcamento, LineItem, OrcamentoStatus, Cliente, Produto } from '../types';
 import { Card, FormField, Input, Select, Textarea, Btn, StatusBadge, fmtMoeda, Modal, CurrencyInput, CpfCnpjInput, TelefoneInput, DataInput } from './ui';
 import { gerarPDF } from '../pdfGenerator';
+import { pdfsApi } from '../api';
 import { loadConfig } from './Configuracoes';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -195,7 +196,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
         </div>
         <StatusBadge status={status} />
         <div style={{ marginLeft:'auto',display:'flex',gap:8,flexWrap:'wrap' }}>
-          {orcamento && <Btn onClick={()=>gerarPDF(orcamento, loadConfig(), clientes.find(c=>c.id===orcamento.clienteId))} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>}>PDF</Btn>}
+          {orcamento && <Btn onClick={async ()=>{ const b64 = gerarPDF(orcamento, loadConfig(), clientes.find(c=>c.id===orcamento.clienteId)); if(b64) try { await pdfsApi.uploadBase64(orcamento.id, orcamento.numero, b64); } catch {} }} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>}>PDF</Btn>}
           <Btn onClick={()=>handleSalvar('enviado')} icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22,2 15,22 11,13 2,9"/></svg>}>Enviar</Btn>
           <Btn variant="primary" onClick={()=>handleSalvar()}>Salvar orçamento</Btn>
         </div>
@@ -266,7 +267,7 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
           {itens.map((item, idx) => (
             <div key={item.id} style={{ display:'grid',gridTemplateColumns:'2.5fr 1fr 1fr 0.8fr 0.8fr 36px',gap:8,padding:'8px 12px',borderBottom: idx < itens.length-1 ? '1px solid var(--border)' : 'none',alignItems:'center' }}>
               <input value={item.descricao} onChange={e=>updateItem(item.id,'descricao',e.target.value)} placeholder="Descrição do item..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
-              <input type="number" value={item.quantidade} min={1} onChange={e=>updateItem(item.id,'quantidade',parseFloat(e.target.value)||0)} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
+              <input inputMode="numeric" value={String(item.quantidade)} onChange={e=>{ const v=e.target.value.replace(/\D/g,'').replace(/^0+(\d)/,'$1'); updateItem(item.id,'quantidade',parseInt(v||'1',10)||1); }} style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',textAlign:'center',width:'100%' }} />
               <CurrencyInput value={item.valorUnitario} onChange={v=>updateItem(item.id,'valorUnitario',v)} />
               <input value={item.periodo||''} onChange={e=>updateItem(item.id,'periodo',e.target.value)} placeholder="ex: 3 dias, 2 semanas..." style={{ padding:'7px 10px',border:'1px solid var(--border)',borderRadius:8,fontSize:13,fontFamily:"'Inter',sans-serif",outline:'none',color:'var(--text)',background:'var(--surface)',width:'100%' }} />
               <span style={{ fontSize:13,fontWeight:600,textAlign:'right',paddingRight:4,whiteSpace:'nowrap' }}>{fmtMoeda(item.quantidade*item.valorUnitario)}</span>
@@ -281,13 +282,14 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
 
       <div style={{ display:'grid',gridTemplateColumns:'1fr 1fr',gap:14,marginBottom:14 }}>
         <Card>
-          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:14 }}>Detalhes do orçamento</div>
+          <div style={{ fontFamily:"'Outfit',sans-serif",fontSize:14,fontWeight:600,marginBottom:4 }}>Detalhes do orçamento</div>
+          <div style={{ fontSize:12,color:'var(--text3)',marginBottom:12 }}>Condições de pagamento, prazos, notas internas...</div>
           <Textarea
-            rows={7}
+            rows={9}
             value={observacoes}
             onChange={e=>setObservacoes(e.target.value)}
-            placeholder={"Condições de pagamento, prazo de entrega, notas...\n\nPressione Enter para nova linha."}
-            style={{ resize:'vertical' }}
+            placeholder={"Ex:\n• Pagamento: 50% entrada + 50% na entrega\n• Prazo de execução: 5 dias úteis\n• Validade desta proposta: 14 dias"}
+            style={{ resize:'vertical', minHeight: 180, lineHeight: 1.7, fontSize: 13.5 }}
           />
         </Card>
 

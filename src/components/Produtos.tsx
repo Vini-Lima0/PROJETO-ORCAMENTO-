@@ -110,7 +110,21 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
               <option value="servico">Serviço</option>
             </Select>
           </FormField>
-          <FormField label="Unidade"><Input value={form.unidade} onChange={e=>setForm({...form,unidade:e.target.value})} placeholder="diária, hora, unidade..." /></FormField>
+          <FormField label="Unidade">
+            <Select value={form.unidade} onChange={e=>setForm({...form,unidade:e.target.value})}>
+              <option value="unidade">unidade</option>
+              <option value="diária">diária</option>
+              <option value="metro">metro</option>
+              <option value="hora">hora</option>
+              <option value="m²">m²</option>
+              <option value="m³">m³</option>
+              <option value="pacote">pacote</option>
+              <option value="lote">lote</option>
+              <option value="serviço">serviço</option>
+              <option value="mensal">mensal</option>
+              <option value="outros">outros</option>
+            </Select>
+          </FormField>
           <FormField label="Preço"><CurrencyInput value={form.preco} onChange={v=>setForm({...form,preco:v})} /></FormField>
           {form.tipo === 'produto' && (
             <FormField label="Estoque"><Input type="number" value={form.estoque??0} min={0} onChange={e=>setForm({...form,estoque:parseInt(e.target.value)||0})} /></FormField>

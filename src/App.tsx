@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import './index.css';
+import cfg from './config';
 import { Section, Orcamento, Cliente, Produto, Evento, Usuario, Venda, OrdemServico } from './types';
 import { calcularTotais } from './data';
 import {
@@ -100,14 +101,15 @@ export default function App() {
     ).catch(() => {});
   }, []);
 
+  // Auto-login from stored token
   useEffect(() => {
-    const tk = localStorage.getItem('opsuite_token');
+    const tk = localStorage.getItem(cfg.tokenKey);
     if (!tk) { setAppReady(true); return; }
     authApi.me().then(u => {
       setUser({ id: u.id, nome: u.nome, email: u.email, senha: '', role: u.role as any, ativo: u.ativo, criadoEm: '' });
       return carregarDados();
     }).catch(() => {
-      localStorage.removeItem('opsuite_token');
+      localStorage.removeItem(cfg.tokenKey);
     }).finally(() => setAppReady(true));
   }, [carregarDados]);
 
@@ -218,7 +220,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('opsuite_token');
+    localStorage.removeItem(cfg.tokenKey);
     setUser(null);
     setOrcamentos([]); setClientes([]); setProdutos([]);
     setEventos([]); setUsuarios([]); setVendas([]); setOrdens([]);
@@ -226,7 +228,7 @@ export default function App() {
 
   if (!appReady) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)', flexDirection: 'column', gap: 16 }}>
-      <div style={{ width: 40, height: 40, background: 'var(--text)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, color: '#fff', fontSize: 14 }}>OP</div>
+      <div style={{ width: 40, height: 40, background: 'var(--text)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, color: '#fff', fontSize: 14 }}>{cfg.sigla}</div>
       <div style={{ fontSize: 14, color: 'var(--text2)' }}>Carregando...</div>
     </div>
   );
@@ -331,7 +333,12 @@ export default function App() {
           }} />;
       case 'vendas':
         return <Vendas vendas={vendas} userRole={user.role}
-          onSalvar={v => setVendas(p => { const i = p.findIndex(x => x.id === v.id); if (i >= 0) { const n = [...p]; n[i] = v; return n; } return [v, ...p]; })}
+          onSalvar={async v => {
+            try {
+              const salva = await vendasApi.atualizar(v.id, v);
+              setVendas(p => { const i = p.findIndex(x => x.id === salva.id); if (i >= 0) { const n = [...p]; n[i] = normalizeVenda(salva); return n; } return [normalizeVenda(salva), ...p]; });
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
           onDelete={async id => {
             try {
               await vendasApi.deletar(id);
@@ -375,26 +382,27 @@ export default function App() {
       <nav style={{ width: 240, background: 'var(--text)', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, transform: (!isMobile || sidebarOpen) ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform .25s' }}>
         <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>OP</div>
+            <div style={{ width: 32, height: 32, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>{cfg.sigla}</div>
             <div>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: '-0.3px' }}>OpSuite</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Plataforma Operacional</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: '-0.3px' }}>{cfg.nome}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{cfg.tagline}</div>
             </div>
           </div>
         </div>
         <div style={{ padding: '12px 10px 4px', flex: 1, overflowY: 'auto' }}>
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '6px 8px 4px' }}>COMERCIAL</div>
           <NavItem label="Dashboard" icon="⊞" active={section === 'dashboard'} onClick={() => navTo('dashboard')} />
           <NavItem label="Orçamentos" icon="📄" active={section === 'orcamentos' || section === 'novo-orcamento'} onClick={() => navTo('orcamentos')} badge={pendOrc || undefined} />
-          <NavItem label="Clientes" icon="👥" active={section === 'clientes'} onClick={() => navTo('clientes')} />
-          <NavItem label="Produtos" icon="📦" active={section === 'produtos'} onClick={() => navTo('produtos')} />
-          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>COMERCIAL</div>
           <NavItem label="Vendas" icon="💰" active={section === 'vendas'} onClick={() => navTo('vendas')} badge={pendVendas || undefined} />
-          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>OPERACIONAL</div>
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>OPERAÇÃO</div>
           <NavItem label="Ordens de Serviço" icon="🔧" active={section === 'ordens-servico'} onClick={() => navTo('ordens-servico')} badge={pendOS || undefined} />
           <NavItem label="Agenda" icon="📅" active={section === 'agenda'} onClick={() => navTo('agenda')} dot />
+          <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>CADASTROS</div>
+          <NavItem label="Clientes" icon="👥" active={section === 'clientes'} onClick={() => navTo('clientes')} />
+          <NavItem label="Produtos" icon="📦" active={section === 'produtos'} onClick={() => navTo('produtos')} />
           <div style={{ fontSize: 10, fontWeight: 500, color: 'rgba(255,255,255,0.25)', letterSpacing: '1.2px', padding: '16px 8px 4px' }}>SISTEMA</div>
-          {user.role === 'admin' && <NavItem label="Usuários" icon="👤" active={section === 'usuarios'} onClick={() => navTo('usuarios')} />}
           <NavItem label="Configurações" icon="⚙" active={section === 'configuracoes'} onClick={() => navTo('configuracoes')} />
+          {user.role === 'admin' && <NavItem label="Usuários" icon="👤" active={section === 'usuarios'} onClick={() => navTo('usuarios')} />}
         </div>
         <div style={{ padding: '14px 10px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 9 }}>

@@ -128,19 +128,19 @@ export function Avatar({ name, size=38 }: { name:string; size?:number }) {
 export const fmtMoeda = (v: number) => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
 export function CurrencyInput({ value, onChange, style }: { value: number; onChange: (v: number) => void; style?: React.CSSProperties }) {
-  const [focused, setFocused] = useState(false);
   const [raw, setRaw] = useState('');
-  const ref = useRef<HTMLInputElement>(null);
-  const display = focused ? raw : value === 0 ? '' : fmtMoeda(value);
-  const handleFocus = () => { setRaw(Math.round(value * 100) === 0 ? '' : String(Math.round(value * 100))); setFocused(true); };
+  const [focused, setFocused] = useState(false);
+  const fmt = (digits: string) => (parseInt(digits || '0', 10) / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const display = focused ? (raw ? fmt(raw) : '') : (value === 0 ? '' : value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const handleFocus = () => { const c = Math.round(value * 100); setRaw(c === 0 ? '' : String(c)); setFocused(true); };
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, '');
     setRaw(digits);
     onChange(parseInt(digits || '0', 10) / 100);
   };
   return (
-    <input ref={ref} value={display} onChange={handleChange} onFocus={handleFocus} onBlur={()=>{setFocused(false);setRaw('');}}
-      placeholder="R$ 0,00" inputMode="numeric"
+    <input value={display} onChange={handleChange} onFocus={handleFocus} onBlur={() => { setFocused(false); setRaw(''); }}
+      placeholder="0,00" inputMode="numeric"
       style={{ ...inputStyle, ...style }} />
   );
 }
