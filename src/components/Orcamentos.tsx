@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Orcamento, OrcamentoStatus, Cliente, Venda } from '../types';
 import { StatusBadge, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
+import { pdfsApi } from '../api';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import Relatorio from './Relatorio';
@@ -76,9 +77,7 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
 
   return (
     <div>
-      {/* Topo: período + busca + botões */}
       <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:18,flexWrap:'wrap' }}>
-        {/* Navegação de período */}
         <div style={{ display:'flex',alignItems:'center',gap:6,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'6px 10px' }}>
           <button onClick={()=>setPeriodo(p=>subMonths(p,1))}
             style={{ width:28,height:28,borderRadius:7,border:'none',background:'none',cursor:'pointer',color:'var(--text)',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center' }}>←</button>
@@ -89,7 +88,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
             style={{ width:28,height:28,borderRadius:7,border:'none',background:'none',cursor:'pointer',color:'var(--text)',fontSize:16,display:'flex',alignItems:'center',justifyContent:'center' }}>→</button>
         </div>
 
-        {/* Busca */}
         <div style={{ flex:1,minWidth:200,maxWidth:340,display:'flex',alignItems:'center',gap:8,background:'var(--surface)',border:'1px solid var(--border)',borderRadius:10,padding:'8px 12px' }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar cliente ou número..."
@@ -109,7 +107,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         </div>
       </div>
 
-      {/* Cards de resumo */}
       <div style={{ display:'flex',gap:12,marginBottom:20,flexWrap:'wrap' }}>
         <button style={cardAtivo('recusado')} onClick={()=>setFiltroCard(filtroCard==='recusado'?'todos':'recusado')}>
           <div style={{ fontSize:12,color:'var(--text3)',marginBottom:6 }}>Recusados ({totalRecusados})</div>
@@ -129,7 +126,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         </button>
       </div>
 
-      {/* Tabela */}
       <div style={{ background:'var(--surface)',border:'1px solid var(--border)',borderRadius:14,overflow:'hidden' }}>
         {filtered.length === 0 ? (
           <div style={{ padding:48,textAlign:'center',color:'var(--text3)',fontSize:14 }}>Nenhum orçamento encontrado neste período</div>
@@ -172,7 +168,7 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
                       </div>
                     </td>
                     <td style={{ padding:'12px 16px' }}>
-                      <button onClick={()=>gerarPDF(o, undefined, clientes.find(c=>c.id===o.clienteId))}
+                      <button onClick={async ()=>{ const b64 = gerarPDF(o, undefined, clientes.find(c=>c.id===o.clienteId)); if(b64) try { await pdfsApi.uploadBase64(o.id, o.numero, b64); } catch {} }}
                         title="Gerar PDF"
                         style={{ width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
@@ -192,7 +188,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         )}
       </div>
 
-      {/* Confirm delete orçamento */}
       {confirmDelete && (() => {
         const temVenda = vendas.some(v => v.orcamentoId === confirmDelete);
         const orc = orcamentos.find(o => o.id === confirmDelete);
@@ -220,7 +215,6 @@ export default function Orcamentos({ orcamentos, clientes, vendas, onNovo, onEdi
         );
       })()}
 
-      {/* Menu de ações */}
       {menuOpen && (
         <>
           <div style={{ position:'fixed',inset:0,zIndex:40 }} onClick={()=>setMenuOpen(null)} />
