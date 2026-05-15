@@ -175,8 +175,8 @@ export function TelefoneInput({ value, onChange }: { value: string; onChange: (v
     const d = e.target.value.replace(/\D/g, '').slice(0, 11);
     let fmt = d;
     if (d.length > 2)  fmt = `(${d.slice(0,2)}) ${d.slice(2)}`;
-    if (d.length > 7)  fmt = `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
-    if (d.length <= 10 && d.length > 6) fmt = `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+    if (d.length > 6)  fmt = `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+    if (d.length > 10) fmt = `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
     onChange(fmt);
   };
   return (

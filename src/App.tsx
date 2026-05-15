@@ -75,12 +75,10 @@ export default function App() {
   };
 
   const duplicarOrc = (orc: Orcamento) => {
-    const nums = orcamentos.map(o => parseInt(o.numero.replace('ORÇ-', ''), 10)).filter(n => !isNaN(n));
-    const next = nums.length ? Math.max(...nums) + 1 : 1;
     const novo: Orcamento = {
       ...orc,
       id: crypto.randomUUID(),
-      numero: `ORÇ-${String(next).padStart(4, '0')}`,
+      numero: proximoNumero,
       status: 'rascunho',
       criadoEm: format(new Date(), 'yyyy-MM-dd'),
       itens: orc.itens.map(i => ({ ...i, id: crypto.randomUUID() })),
