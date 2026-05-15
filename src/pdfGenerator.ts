@@ -218,7 +218,7 @@ export function gerarPDF(orc: Orcamento, config: ConfigEmpresa = defaultConfig, 
     },
   });
 
-  y = (doc as any).lastAutoTable.finalY;
+  y = (doc as any).lastAutoTable?.finalY ?? y;
 
   const totX = W - M - 62;
 
