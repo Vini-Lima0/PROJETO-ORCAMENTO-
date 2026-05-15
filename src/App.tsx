@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import './index.css';
+import cfg from './config';
 import { Section, Orcamento, Cliente, Produto, Evento, Usuario, Venda, OrdemServico } from './types';
 import { calcularTotais } from './data';
 import {
@@ -102,13 +103,13 @@ export default function App() {
 
   // Auto-login from stored token
   useEffect(() => {
-    const tk = localStorage.getItem('opsuite_token');
+    const tk = localStorage.getItem(cfg.tokenKey);
     if (!tk) { setAppReady(true); return; }
     authApi.me().then(u => {
       setUser({ id: u.id, nome: u.nome, email: u.email, senha: '', role: u.role as any, ativo: u.ativo, criadoEm: '' });
       return carregarDados();
     }).catch(() => {
-      localStorage.removeItem('opsuite_token');
+      localStorage.removeItem(cfg.tokenKey);
     }).finally(() => setAppReady(true));
   }, [carregarDados]);
 
@@ -219,7 +220,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('opsuite_token');
+    localStorage.removeItem(cfg.tokenKey);
     setUser(null);
     setOrcamentos([]); setClientes([]); setProdutos([]);
     setEventos([]); setUsuarios([]); setVendas([]); setOrdens([]);
@@ -227,7 +228,7 @@ export default function App() {
 
   if (!appReady) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)', flexDirection: 'column', gap: 16 }}>
-      <div style={{ width: 40, height: 40, background: 'var(--text)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, color: '#fff', fontSize: 14 }}>OP</div>
+      <div style={{ width: 40, height: 40, background: 'var(--text)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, color: '#fff', fontSize: 14 }}>{cfg.sigla}</div>
       <div style={{ fontSize: 14, color: 'var(--text2)' }}>Carregando...</div>
     </div>
   );
@@ -376,10 +377,10 @@ export default function App() {
       <nav style={{ width: 240, background: 'var(--text)', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'fixed', left: 0, top: 0, bottom: 0, zIndex: 100, transform: (!isMobile || sidebarOpen) ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform .25s' }}>
         <div style={{ padding: '22px 18px 18px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>OP</div>
+            <div style={{ width: 32, height: 32, background: '#fff', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 13, color: 'var(--text)' }}>{cfg.sigla}</div>
             <div>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: '-0.3px' }}>OpSuite</div>
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>Plataforma Operacional</div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: '-0.3px' }}>{cfg.nome}</div>
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)' }}>{cfg.tagline}</div>
             </div>
           </div>
         </div>
