@@ -1,29 +1,31 @@
 import React, { useState } from 'react';
 import { Usuario } from '../types';
+import { authApi } from '../api';
 
 interface Props {
-  usuarios: Usuario[];
   onLogin: (usuario: Usuario) => void;
 }
 
-export default function Login({ usuarios, onLogin }: Props) {
+export default function Login({ onLogin }: Props) {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [erro, setErro] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErro('');
     if (!email || !senha) { setErro('Preencha e-mail e senha.'); return; }
-
-    const usuario = usuarios.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!usuario) { setErro('E-mail não encontrado.'); return; }
-    if (!usuario.ativo) { setErro('Usuário inativo. Contate o administrador.'); return; }
-    if (usuario.senha !== senha) { setErro('Senha incorreta.'); return; }
-
     setLoading(true);
-    setTimeout(() => onLogin(usuario), 700);
+    try {
+      const { token, usuario } = await authApi.login(email, senha);
+      localStorage.setItem('opsuite_token', token);
+      onLogin({ ...usuario, senha: '', role: usuario.role as any, ativo: true, criadoEm: '' });
+    } catch (e: any) {
+      setErro(e.message || 'Erro ao fazer login.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
