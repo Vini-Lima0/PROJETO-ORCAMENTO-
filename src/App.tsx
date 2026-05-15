@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import './index.css';
 import { Section, Orcamento, Cliente, Produto, Evento, Usuario, Venda, OrdemServico } from './types';
+import { calcularTotais } from './data';
 import {
-  loadData, saveData, calcularTotais,
-  clientesIniciais, produtosIniciais, orcamentosIniciais, eventosIniciais, usuariosIniciais,
-  vendasIniciais, ordensServicoIniciais,
-  proximoNumeroVenda, proximoNumeroOS,
-} from './data';
+  authApi, clientesApi, produtosApi, orcamentosApi,
+  vendasApi, ordensApi, eventosApi, usuariosApi,
+} from './api';
 import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import Orcamentos from './components/Orcamentos';
@@ -45,8 +44,19 @@ function NavItem({ label, icon, active, onClick, badge, dot }: any) {
   );
 }
 
+function normalizeOrc(o: any): Orcamento {
+  return { ...o, itens: o.itens || [] };
+}
+function normalizeVenda(v: any): Venda {
+  return { ...v, pagamentos: v.pagamentos || [], itens: [] };
+}
+function normalizeOS(o: any): OrdemServico {
+  return { ...o, itens: o.itens || [] };
+}
+
 export default function App() {
   const [user, setUser] = useState<Usuario | null>(null);
+  const [appReady, setAppReady] = useState(false);
   const [section, setSection] = useState<Section>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [editOrc, setEditOrc] = useState<Orcamento | null>(null);
@@ -55,27 +65,13 @@ export default function App() {
   const [filtroOsVendaId, setFiltroOsVendaId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<{ id: string; msg: string }[]>([]);
 
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>(() =>
-    loadData('opsuite_orc', orcamentosIniciais).map(o => ({ ...o, ...calcularTotais(o) }))
-  );
-  const [clientes, setClientes] = useState<Cliente[]>(() => loadData('opsuite_cli', clientesIniciais));
-  const [produtos, setProdutos] = useState<Produto[]>(() => loadData('opsuite_prod', produtosIniciais));
-  const [eventos, setEventos] = useState<Evento[]>(() => loadData('opsuite_ev', eventosIniciais));
-  const [usuarios, setUsuarios] = useState<Usuario[]>(() => loadData('opsuite_usr', usuariosIniciais));
-  const [vendas, setVendas] = useState<Venda[]>(() => loadData('opsuite_vnd', vendasIniciais));
-  const [ordens, setOrdens] = useState<OrdemServico[]>(() => loadData('opsuite_os', ordensServicoIniciais));
-
-  useEffect(() => { saveData('opsuite_orc', orcamentos); }, [orcamentos]);
-  useEffect(() => { saveData('opsuite_cli', clientes); }, [clientes]);
-  useEffect(() => { saveData('opsuite_prod', produtos); }, [produtos]);
-  useEffect(() => { saveData('opsuite_ev', eventos); }, [eventos]);
-  useEffect(() => { saveData('opsuite_usr', usuarios); }, [usuarios]);
-  useEffect(() => { saveData('opsuite_vnd', vendas); }, [vendas]);
-  useEffect(() => { saveData('opsuite_os', ordens); }, [ordens]);
-  useEffect(() => {
-    const h = () => setIsMobile(window.innerWidth <= 900);
-    window.addEventListener('resize', h); return () => window.removeEventListener('resize', h);
-  }, []);
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [eventos, setEventos] = useState<Evento[]>([]);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [vendas, setVendas] = useState<Venda[]>([]);
+  const [ordens, setOrdens] = useState<OrdemServico[]>([]);
 
   const addToast = (msg: string) => {
     const id = crypto.randomUUID();
@@ -83,58 +79,45 @@ export default function App() {
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 4000);
   };
 
-  const criarVendaEOS = (orc: Orcamento, vendasAtuais: Venda[], ordensAtuais: OrdemServico[]) => {
-    const jaExiste = vendasAtuais.some(v => v.orcamentoId === orc.id);
-    if (jaExiste) return { novasVendas: vendasAtuais, novasOrdens: ordensAtuais };
+  const carregarDados = useCallback(async () => {
+    const [orcs, clis, prods, evs, vnds, oss] = await Promise.all([
+      orcamentosApi.listar(),
+      clientesApi.listar(),
+      produtosApi.listar(),
+      eventosApi.listar(),
+      vendasApi.listar(),
+      ordensApi.listar(),
+    ]);
+    setOrcamentos(orcs.map(normalizeOrc));
+    setClientes(clis);
+    setProdutos(prods);
+    setEventos(evs);
+    setVendas(vnds.map(normalizeVenda));
+    setOrdens(oss.map(normalizeOS));
 
-    const numVenda = proximoNumeroVenda(vendasAtuais);
-    const novaVenda: Venda = {
-      id: crypto.randomUUID(),
-      numero: numVenda,
-      orcamentoId: orc.id,
-      orcamentoNumero: orc.numero,
-      clienteId: orc.clienteId,
-      clienteNome: orc.clienteNome,
-      contato: orc.contato,
-      itens: orc.itens.map(i => ({ ...i, id: crypto.randomUUID() })),
-      desconto: orc.desconto,
-      impostos: orc.impostos,
-      subtotal: orc.subtotal,
-      total: orc.total,
-      observacoes: orc.observacoes,
-      criadoEm: format(new Date(), 'yyyy-MM-dd'),
-      situacao: 'pendente',
-      pagamentos: [],
-    };
+    usuariosApi.listar().then(usrs =>
+      setUsuarios(usrs.map((u: any) => ({ ...u, senha: '' })))
+    ).catch(() => {});
+  }, []);
 
-    const numOS = proximoNumeroOS(ordensAtuais);
-    const novaOS: OrdemServico = {
-      id: crypto.randomUUID(),
-      numero: numOS,
-      vendaId: novaVenda.id,
-      vendaNumero: numVenda,
-      orcamentoNumero: orc.numero,
-      clienteId: orc.clienteId,
-      clienteNome: orc.clienteNome,
-      contato: orc.contato,
-      enderecoEvento: '',
-      dataMontagem: '',
-      dataRetirada: '',
-      horarioInicio: '',
-      horarioFim: '',
-      equipe: '',
-      motorista: '',
-      itens: orc.itens.map(i => ({ ...i, id: crypto.randomUUID() })),
-      observacoesOperacionais: orc.observacoes,
-      status: 'pendente',
-      criadoEm: format(new Date(), 'yyyy-MM-dd'),
-    };
+  // Auto-login from stored token
+  useEffect(() => {
+    const tk = localStorage.getItem('opsuite_token');
+    if (!tk) { setAppReady(true); return; }
+    authApi.me().then(u => {
+      setUser({ id: u.id, nome: u.nome, email: u.email, senha: '', role: u.role as any, ativo: u.ativo, criadoEm: '' });
+      return carregarDados();
+    }).catch(() => {
+      localStorage.removeItem('opsuite_token');
+    }).finally(() => setAppReady(true));
+  }, [carregarDados]);
 
-    return {
-      novasVendas: [novaVenda, ...vendasAtuais],
-      novasOrdens: [novaOS, ...ordensAtuais],
-    };
-  };
+  useEffect(() => {
+    const h = () => setIsMobile(window.innerWidth <= 900);
+    window.addEventListener('resize', h); return () => window.removeEventListener('resize', h);
+  }, []);
+
+  const navTo = (s: Section) => { setSection(s); setSidebarOpen(false); setBusca(''); };
 
   const proximoNumero = (() => {
     const nums = orcamentos.map(o => parseInt(o.numero.replace('ORÇ-', ''), 10)).filter(n => !isNaN(n));
@@ -142,67 +125,114 @@ export default function App() {
     return `ORÇ-${String(next).padStart(4, '0')}`;
   })();
 
-  const navTo = (s: Section) => { setSection(s); setSidebarOpen(false); setBusca(''); };
+  const criarVendaEOS = async (orc: Orcamento) => {
+    const jaExiste = vendas.some(v => v.orcamentoId === orc.id);
+    if (jaExiste) return;
+    try {
+      const novaVenda = await vendasApi.criar({
+        orcamentoId: orc.id, orcamentoNumero: orc.numero,
+        clienteId: orc.clienteId, clienteNome: orc.clienteNome, contato: orc.contato,
+        desconto: orc.desconto, impostos: orc.impostos, subtotal: orc.subtotal, total: orc.total,
+        observacoes: orc.observacoes, criadoEm: format(new Date(), 'yyyy-MM-dd'),
+      });
+      const novaOS = await ordensApi.criar({
+        vendaId: novaVenda.id, vendaNumero: novaVenda.numero, orcamentoNumero: orc.numero,
+        clienteId: orc.clienteId, clienteNome: orc.clienteNome, contato: orc.contato,
+        enderecoEvento: '', dataMontagem: '', dataRetirada: '',
+        horarioInicio: '', horarioFim: '', equipe: '', motorista: '',
+        itens: orc.itens, observacoesOperacionais: orc.observacoes,
+        criadoEm: format(new Date(), 'yyyy-MM-dd'),
+      });
+      setVendas(v => [normalizeVenda(novaVenda), ...v]);
+      setOrdens(o => [normalizeOS(novaOS), ...o]);
+      addToast(`✅ Venda ${novaVenda.numero} e OS ${novaOS.numero} geradas automaticamente!`);
+    } catch (e: any) { addToast(`❌ Erro ao gerar venda/OS: ${e.message}`); }
+  };
 
-  const saveOrc = (orc: Orcamento) => {
+  const saveOrc = async (orc: Orcamento) => {
     const orcComTotais = { ...orc, ...calcularTotais(orc) };
-    setOrcamentos(p => {
-      const i = p.findIndex(x => x.id === orcComTotais.id);
-      if (i >= 0) { const n = [...p]; n[i] = orcComTotais; return n; }
-      return [orcComTotais, ...p];
-    });
-
-    if (orcComTotais.status === 'aprovado') {
-      const { novasVendas, novasOrdens } = criarVendaEOS(orcComTotais, vendas, ordens);
-      if (novasVendas !== vendas) {
-        setVendas(novasVendas);
-        setOrdens(novasOrdens);
-        addToast(`✅ Venda e OS geradas automaticamente para ${orcComTotais.clienteNome}!`);
+    try {
+      let salvo: any;
+      const existe = orcamentos.some(x => x.id === orcComTotais.id);
+      if (existe) {
+        salvo = await orcamentosApi.atualizar(orcComTotais.id, orcComTotais);
+      } else {
+        salvo = await orcamentosApi.criar(orcComTotais);
       }
-    }
-
-    navTo('orcamentos');
+      const orcSalvo = normalizeOrc(salvo);
+      setOrcamentos(p => {
+        const i = p.findIndex(x => x.id === orcSalvo.id);
+        if (i >= 0) { const n = [...p]; n[i] = orcSalvo; return n; }
+        return [orcSalvo, ...p];
+      });
+      if (orcSalvo.status === 'aprovado') await criarVendaEOS(orcSalvo);
+      navTo('orcamentos');
+    } catch (e: any) { addToast(`❌ Erro ao salvar orçamento: ${e.message}`); }
   };
 
-  const handleStatusChange = (id: string, status: Orcamento['status']) => {
-    const orc = orcamentos.find(o => o.id === id);
-    if (!orc) return;
-    const orcAtualizado = { ...orc, status };
-    setOrcamentos(p => p.map(o => o.id === id ? orcAtualizado : o));
-
-    if (status === 'aprovado') {
-      const { novasVendas, novasOrdens } = criarVendaEOS(orcAtualizado, vendas, ordens);
-      if (novasVendas !== vendas) {
-        setVendas(novasVendas);
-        setOrdens(novasOrdens);
-        addToast(`✅ ${orc.numero} aprovado! Venda e OS criadas automaticamente.`);
+  const handleStatusChange = async (id: string, status: Orcamento['status']) => {
+    try {
+      const salvo = await orcamentosApi.status(id, status);
+      const orcAtualizado = normalizeOrc(salvo);
+      setOrcamentos(p => p.map(o => o.id === id ? orcAtualizado : o));
+      if (status === 'aprovado') {
+        await criarVendaEOS(orcAtualizado);
+        addToast(`✅ ${orcAtualizado.numero} aprovado! Venda e OS criadas automaticamente.`);
       }
-    }
+    } catch (e: any) { addToast(`❌ Erro ao atualizar status: ${e.message}`); }
   };
 
-  const duplicarOrc = (orc: Orcamento) => {
-    const novo: Orcamento = {
-      ...orc,
-      id: crypto.randomUUID(),
-      numero: proximoNumero,
-      status: 'rascunho',
-      criadoEm: format(new Date(), 'yyyy-MM-dd'),
-      itens: orc.itens.map(i => ({ ...i, id: crypto.randomUUID() })),
-    };
-    setOrcamentos(p => [novo, ...p]);
+  const duplicarOrc = async (orc: Orcamento) => {
+    try {
+      const salvo = await orcamentosApi.criar({
+        ...orc, id: undefined, numero: undefined,
+        status: 'rascunho', criadoEm: format(new Date(), 'yyyy-MM-dd'),
+        itens: orc.itens.map(i => ({ ...i, id: undefined })),
+      });
+      setOrcamentos(p => [normalizeOrc(salvo), ...p]);
+      addToast(`✅ Orçamento duplicado como ${salvo.numero}`);
+    } catch (e: any) { addToast(`❌ Erro ao duplicar orçamento: ${e.message}`); }
   };
 
-  const saveUsuario = (u: Usuario) => {
-    setUsuarios(p => { const i = p.findIndex(x => x.id === u.id); if (i >= 0) { const n = [...p]; n[i] = u; return n; } return [u, ...p]; });
-    if (user && u.id === user.id) setUser(u);
+  const saveUsuario = async (u: Usuario) => {
+    try {
+      const data: any = { nome: u.nome, email: u.email, role: u.role, ativo: u.ativo };
+      if (u.senha) data.senha = u.senha;
+      let salvo: any;
+      const existe = usuarios.some(x => x.id === u.id);
+      if (existe) {
+        salvo = await usuariosApi.atualizar(u.id, data);
+      } else {
+        salvo = await usuariosApi.criar(data);
+      }
+      const uSalvo: Usuario = { ...salvo, senha: '' };
+      setUsuarios(p => { const i = p.findIndex(x => x.id === uSalvo.id); if (i >= 0) { const n = [...p]; n[i] = uSalvo; return n; } return [uSalvo, ...p]; });
+      if (user && uSalvo.id === user.id) setUser(uSalvo);
+    } catch (e: any) { addToast(`❌ Erro ao salvar usuário: ${e.message}`); }
   };
 
-  const verOSdaVenda = (vendaId: string) => {
-    setFiltroOsVendaId(vendaId);
-    navTo('ordens-servico');
+  const verOSdaVenda = (vendaId: string) => { setFiltroOsVendaId(vendaId); navTo('ordens-servico'); };
+
+  const handleLogin = async (u: Usuario) => {
+    setUser(u);
+    await carregarDados();
   };
 
-  if (!user) return <Login usuarios={usuarios} onLogin={u => { setUser(u); }} />;
+  const handleLogout = () => {
+    localStorage.removeItem('opsuite_token');
+    setUser(null);
+    setOrcamentos([]); setClientes([]); setProdutos([]);
+    setEventos([]); setUsuarios([]); setVendas([]); setOrdens([]);
+  };
+
+  if (!appReady) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--bg)', flexDirection: 'column', gap: 16 }}>
+      <div style={{ width: 40, height: 40, background: 'var(--text)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 800, color: '#fff', fontSize: 14 }}>OP</div>
+      <div style={{ fontSize: 14, color: 'var(--text2)' }}>Carregando...</div>
+    </div>
+  );
+
+  if (!user) return <Login onLogin={handleLogin} />;
 
   const q = busca.toLowerCase().trim();
   const orcamentosFiltrados = q ? orcamentos.filter(o =>
@@ -227,41 +257,113 @@ export default function App() {
       case 'dashboard':
         return <Dashboard orcamentos={orcamentos} onVerOrcamentos={() => navTo('orcamentos')} onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }} />;
       case 'orcamentos':
-        return <Orcamentos orcamentos={orcamentosFiltrados} clientes={clientes} vendas={vendas} onNovo={() => { setEditOrc(null); navTo('novo-orcamento'); }} onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }} onDelete={id => setOrcamentos(p => p.filter(o => o.id !== id))} onStatusChange={handleStatusChange} onDuplicar={duplicarOrc} />;
-      case 'novo-orcamento':
-        return <NovoOrcamento orcamento={editOrc} clientes={clientes} produtos={produtos} proximoNumero={proximoNumero} onSalvar={saveOrc} onCancelar={() => navTo('orcamentos')} onSalvarCliente={c => setClientes(p => { const i = p.findIndex(x => x.id === c.id); if (i >= 0) { const n = [...p]; n[i] = c; return n; } return [c, ...p]; })} />;
-      case 'clientes':
-        return <Clientes clientes={clientesFiltrados} onSalvar={c => { setClientes(p => { const i = p.findIndex(x => x.id === c.id); if (i >= 0) { const n = [...p]; n[i] = c; return n; } return [c, ...p]; }); }} onDelete={id => setClientes(p => p.filter(c => c.id !== id))} />;
-      case 'produtos':
-        return <Produtos produtos={produtosFiltrados} onSalvar={p => { setProdutos(prev => { const i = prev.findIndex(x => x.id === p.id); if (i >= 0) { const n = [...prev]; n[i] = p; return n; } return [p, ...prev]; }); }} onDelete={id => setProdutos(p => p.filter(x => x.id !== id))} />;
-      case 'agenda':
-        return <Agenda eventos={eventos} onSalvar={e => { setEventos(p => { const i = p.findIndex(x => x.id === e.id); if (i >= 0) { const n = [...p]; n[i] = e; return n; } return [...p, e]; }); }} onDelete={id => setEventos(p => p.filter(e => e.id !== id))} onToggle={id => setEventos(p => p.map(e => e.id === id ? { ...e, concluido: !e.concluido } : e))} />;
-      case 'vendas':
-        return <Vendas
-          vendas={vendas}
-          userRole={user.role}
-          onSalvar={v => setVendas(p => { const i = p.findIndex(x => x.id === v.id); if (i >= 0) { const n = [...p]; n[i] = v; return n; } return [v, ...p]; })}
-          onDelete={id => {
-            const venda = vendas.find(v => v.id === id);
-            setVendas(p => p.filter(v => v.id !== id));
-            if (venda) setOrdens(p => p.filter(o => o.vendaId !== id));
+        return <Orcamentos orcamentos={orcamentosFiltrados} clientes={clientes} vendas={vendas}
+          onNovo={() => { setEditOrc(null); navTo('novo-orcamento'); }}
+          onEditar={o => { setEditOrc(o); navTo('novo-orcamento'); }}
+          onDelete={async id => {
+            try { await orcamentosApi.deletar(id); setOrcamentos(p => p.filter(o => o.id !== id)); }
+            catch (e: any) { addToast(`❌ ${e.message}`); }
           }}
-          onVerOS={verOSdaVenda}
-        />;
+          onStatusChange={handleStatusChange}
+          onDuplicar={duplicarOrc} />;
+      case 'novo-orcamento':
+        return <NovoOrcamento orcamento={editOrc} clientes={clientes} produtos={produtos}
+          proximoNumero={proximoNumero} onSalvar={saveOrc}
+          onCancelar={() => navTo('orcamentos')}
+          onSalvarCliente={async c => {
+            try {
+              let salvo: any;
+              const existe = clientes.some(x => x.id === c.id);
+              if (existe) salvo = await clientesApi.atualizar(c.id, c);
+              else salvo = await clientesApi.criar(c);
+              setClientes(p => { const i = p.findIndex(x => x.id === salvo.id); if (i >= 0) { const n = [...p]; n[i] = salvo; return n; } return [salvo, ...p]; });
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }} />;
+      case 'clientes':
+        return <Clientes clientes={clientesFiltrados}
+          onSalvar={async c => {
+            try {
+              let salvo: any;
+              const existe = clientes.some(x => x.id === c.id);
+              if (existe) salvo = await clientesApi.atualizar(c.id, c);
+              else salvo = await clientesApi.criar(c);
+              setClientes(p => { const i = p.findIndex(x => x.id === salvo.id); if (i >= 0) { const n = [...p]; n[i] = salvo; return n; } return [salvo, ...p]; });
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
+          onDelete={async id => {
+            try { await clientesApi.deletar(id); setClientes(p => p.filter(c => c.id !== id)); }
+            catch (e: any) { addToast(`❌ ${e.message}`); }
+          }} />;
+      case 'produtos':
+        return <Produtos produtos={produtosFiltrados}
+          onSalvar={async p => {
+            try {
+              let salvo: any;
+              const existe = produtos.some(x => x.id === p.id);
+              if (existe) salvo = await produtosApi.atualizar(p.id, p);
+              else salvo = await produtosApi.criar(p);
+              setProdutos(prev => { const i = prev.findIndex(x => x.id === salvo.id); if (i >= 0) { const n = [...prev]; n[i] = salvo; return n; } return [salvo, ...prev]; });
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
+          onDelete={async id => {
+            try { await produtosApi.deletar(id); setProdutos(p => p.filter(x => x.id !== id)); }
+            catch (e: any) { addToast(`❌ ${e.message}`); }
+          }} />;
+      case 'agenda':
+        return <Agenda eventos={eventos}
+          onSalvar={async e => {
+            try {
+              let salvo: any;
+              const existe = eventos.some(x => x.id === e.id);
+              if (existe) salvo = await eventosApi.atualizar(e.id, e);
+              else salvo = await eventosApi.criar(e);
+              setEventos(p => { const i = p.findIndex(x => x.id === salvo.id); if (i >= 0) { const n = [...p]; n[i] = salvo; return n; } return [...p, salvo]; });
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
+          onDelete={async id => {
+            try { await eventosApi.deletar(id); setEventos(p => p.filter(e => e.id !== id)); }
+            catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
+          onToggle={async id => {
+            try {
+              const salvo = await eventosApi.toggle(id);
+              setEventos(p => p.map(e => e.id === id ? salvo : e));
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }} />;
+      case 'vendas':
+        return <Vendas vendas={vendas} userRole={user.role}
+          onSalvar={v => setVendas(p => { const i = p.findIndex(x => x.id === v.id); if (i >= 0) { const n = [...p]; n[i] = v; return n; } return [v, ...p]; })}
+          onDelete={async id => {
+            try {
+              await vendasApi.deletar(id);
+              setVendas(p => p.filter(v => v.id !== id));
+              setOrdens(p => p.filter(o => o.vendaId !== id));
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
+          onVerOS={verOSdaVenda} />;
       case 'ordens-servico':
-        return <OrdemServicoComp
-          ordens={ordens}
-          userRole={user.role}
-          onSalvar={os => setOrdens(p => { const i = p.findIndex(x => x.id === os.id); if (i >= 0) { const n = [...p]; n[i] = os; return n; } return [os, ...p]; })}
-          onDelete={id => setOrdens(p => p.filter(o => o.id !== id))}
+        return <OrdemServicoComp ordens={ordens} userRole={user.role}
+          onSalvar={async os => {
+            try {
+              const salvo = await ordensApi.atualizar(os.id, os);
+              setOrdens(p => { const i = p.findIndex(x => x.id === salvo.id); if (i >= 0) { const n = [...p]; n[i] = normalizeOS(salvo); return n; } return [normalizeOS(salvo), ...p]; });
+            } catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
+          onDelete={async id => {
+            try { await ordensApi.deletar(id); setOrdens(p => p.filter(o => o.id !== id)); }
+            catch (e: any) { addToast(`❌ ${e.message}`); }
+          }}
           filtroVendaId={filtroOsVendaId}
-          onLimparFiltro={() => setFiltroOsVendaId(null)}
-        />;
+          onLimparFiltro={() => setFiltroOsVendaId(null)} />;
       case 'configuracoes':
         return <Configuracoes />;
       case 'usuarios':
         return user.role === 'admin'
-          ? <Usuarios usuarios={usuarios} usuarioAtualId={user.id} onSalvar={saveUsuario} onDelete={id => setUsuarios(p => p.filter(u => u.id !== id))} />
+          ? <Usuarios usuarios={usuarios} usuarioAtualId={user.id} onSalvar={saveUsuario}
+              onDelete={async id => {
+                try { await usuariosApi.deletar(id); setUsuarios(p => p.filter(u => u.id !== id)); }
+                catch (e: any) { addToast(`❌ ${e.message}`); }
+              }} />
           : <div style={{ padding: 40, textAlign: 'center', color: 'var(--text3)' }}>Acesso restrito a administradores.</div>;
       default:
         return <div style={{ padding: 40, textAlign: 'center', color: 'var(--text3)' }}>Em desenvolvimento</div>;
@@ -304,7 +406,7 @@ export default function App() {
               <div style={{ fontSize: 12.5, fontWeight: 500, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.nome}</div>
               <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)' }}>{user.role === 'admin' ? 'Administrador' : 'Operacional'}</div>
             </div>
-            <button onClick={() => setUser(null)} title="Sair" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: 14, padding: 4 }}>⏻</button>
+            <button onClick={handleLogout} title="Sair" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.3)', fontSize: 14, padding: 4 }}>⏻</button>
           </div>
         </div>
       </nav>
@@ -345,7 +447,6 @@ export default function App() {
         {renderContent()}
       </main>
 
-      {/* Toasts */}
       <div style={{ position: 'fixed', bottom: 24, right: 24, display: 'flex', flexDirection: 'column', gap: 10, zIndex: 9999 }}>
         {toasts.map(t => (
           <div key={t.id} style={{ background: '#1a1a2e', color: '#fff', padding: '12px 18px', borderRadius: 12, fontSize: 13.5, fontFamily: "'Inter',sans-serif", boxShadow: '0 4px 20px rgba(0,0,0,0.25)', maxWidth: 360, display: 'flex', alignItems: 'center', gap: 10, animation: 'fadeInUp .25s ease' }}>
