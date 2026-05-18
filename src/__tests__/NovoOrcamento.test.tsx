@@ -91,6 +91,6 @@ describe('NovoOrcamento', () => {
   it('exibe o campo de observacoes', () => {
     render(<NovoOrcamento {...defaultProps} />);
     expect(screen.getByText('Detalhes do orçamento')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/Condições de pagamento/)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Pagamento:/)).toBeInTheDocument();
   });
 });

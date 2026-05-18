@@ -199,7 +199,15 @@ export function DataInput({ value, onChange }: { value: string; onChange: (v: st
     if (d.length > 2) fmt = `${d.slice(0,2)}/${d.slice(2)}`;
     if (d.length > 4) fmt = `${d.slice(0,2)}/${d.slice(2,4)}/${d.slice(4)}`;
     setText(fmt);
-    if (d.length === 8) onChange(`${d.slice(4,8)}-${d.slice(2,4)}-${d.slice(0,2)}`);
+    if (d.length === 8) {
+      const dia = parseInt(d.slice(0,2), 10);
+      const mes = parseInt(d.slice(2,4), 10);
+      const ano = parseInt(d.slice(4,8), 10);
+      const data = new Date(ano, mes - 1, dia);
+      if (data.getFullYear() === ano && data.getMonth() === mes - 1 && data.getDate() === dia && ano >= 1900) {
+        onChange(`${d.slice(4,8)}-${d.slice(2,4)}-${d.slice(0,2)}`);
+      }
+    }
   };
   return (
     <input value={text} onChange={handleChange} inputMode="numeric" placeholder="dd/mm/aaaa"

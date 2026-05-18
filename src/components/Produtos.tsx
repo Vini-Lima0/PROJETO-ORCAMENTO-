@@ -35,8 +35,9 @@ export default function Produtos({ produtos, onSalvar, onDelete }: Props) {
   const abrirEditar = (p: Produto) => { setForm({ ...p }); setModal(true); };
 
   const salvar = () => {
-    if (!form.nome) return alert('Nome obrigatório');
-    onSalvar({ ...form, id: form.id || uuid() });
+    const nome = form.nome.trim();
+    if (!nome) return alert('Nome obrigatório');
+    onSalvar({ ...form, nome, id: form.id || uuid() });
     setModal(false);
   };
 

@@ -139,10 +139,11 @@ export default function NovoOrcamento({ orcamento, clientes, produtos, onSalvar,
   const [novoClienteModal, setNovoClienteModal] = useState(false);
   const [novoClienteForm, setNovoClienteForm] = useState<Cliente>(emptyCliente());
 
-  const subtotal = itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0);
-  const descontoVal = subtotal * desconto / 100;
-  const impostosVal = (subtotal - descontoVal) * impostos / 100;
-  const total = subtotal - descontoVal + impostosVal;
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+  const subtotal = round2(itens.reduce((s, i) => s + i.quantidade * i.valorUnitario, 0));
+  const descontoVal = round2(subtotal * desconto / 100);
+  const impostosVal = round2((subtotal - descontoVal) * impostos / 100);
+  const total = round2(subtotal - descontoVal + impostosVal);
 
   const clienteSelecionado = clientes.find(c => c.id === clienteId);
 

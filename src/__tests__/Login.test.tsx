@@ -1,78 +1,51 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Login from '../components/Login';
-import { Usuario } from '../types';
 
-const usuarios: Usuario[] = [
-  { id: 'u1', nome: 'Admin Teste', email: 'admin@test.com', senha: 'senha123', role: 'admin', ativo: true, criadoEm: '2026-01-01' },
-  { id: 'u2', nome: 'Inativo',    email: 'inativo@test.com', senha: 'senha123', role: 'operacional', ativo: false, criadoEm: '2026-01-01' },
-];
+jest.mock('../api', () => ({
+  authApi: { login: jest.fn() },
+}));
+
+import { authApi } from '../api';
 
 const emailInput = () => screen.getByPlaceholderText('seu@email.com');
 const senhaInput = () => screen.getByPlaceholderText('••••••••');
 const btnEntrar  = () => screen.getByRole('button', { name: 'Entrar' });
 
 describe('Login', () => {
+  beforeEach(() => { (authApi.login as jest.Mock).mockReset(); });
+
   it('renderiza tela de login', () => {
-    render(<Login usuarios={usuarios} onLogin={jest.fn()} />);
-    expect(screen.getByText('OpSuite')).toBeInTheDocument();
+    render(<Login onLogin={jest.fn()} />);
     expect(screen.getByText('Entrar na plataforma')).toBeInTheDocument();
     expect(emailInput()).toBeInTheDocument();
     expect(senhaInput()).toBeInTheDocument();
   });
 
   it('exibe erro ao submeter sem preencher campos', () => {
-    render(<Login usuarios={usuarios} onLogin={jest.fn()} />);
+    render(<Login onLogin={jest.fn()} />);
     fireEvent.click(btnEntrar());
     expect(screen.getByText('Preencha e-mail e senha.')).toBeInTheDocument();
   });
 
-  it('exibe erro para e-mail desconhecido', () => {
-    render(<Login usuarios={usuarios} onLogin={jest.fn()} />);
-    fireEvent.change(emailInput(), { target: { value: 'naoexiste@test.com' } });
-    fireEvent.change(senhaInput(), { target: { value: 'qualquer' } });
+  it('exibe erro ao falhar no login da API', async () => {
+    (authApi.login as jest.Mock).mockRejectedValueOnce(new Error('Credenciais inválidas'));
+    render(<Login onLogin={jest.fn()} />);
+    fireEvent.change(emailInput(), { target: { value: 'a@b.com' } });
+    fireEvent.change(senhaInput(), { target: { value: '123' } });
     fireEvent.click(btnEntrar());
-    expect(screen.getByText('E-mail não encontrado.')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Credenciais inválidas')).toBeInTheDocument());
   });
 
-  it('exibe erro para senha incorreta', () => {
-    render(<Login usuarios={usuarios} onLogin={jest.fn()} />);
-    fireEvent.change(emailInput(), { target: { value: 'admin@test.com' } });
-    fireEvent.change(senhaInput(), { target: { value: 'errada' } });
-    fireEvent.click(btnEntrar());
-    expect(screen.getByText('Senha incorreta.')).toBeInTheDocument();
-  });
-
-  it('exibe erro para usuário inativo', () => {
-    render(<Login usuarios={usuarios} onLogin={jest.fn()} />);
-    fireEvent.change(emailInput(), { target: { value: 'inativo@test.com' } });
-    fireEvent.change(senhaInput(), { target: { value: 'senha123' } });
-    fireEvent.click(btnEntrar());
-    expect(screen.getByText('Usuário inativo. Contate o administrador.')).toBeInTheDocument();
-  });
-
-  it('chama onLogin com o usuário correto após credenciais válidas', () => {
-    jest.useFakeTimers();
+  it('chama onLogin com sucesso', async () => {
     const onLogin = jest.fn();
-    render(<Login usuarios={usuarios} onLogin={onLogin} />);
-    fireEvent.change(emailInput(), { target: { value: 'admin@test.com' } });
-    fireEvent.change(senhaInput(), { target: { value: 'senha123' } });
+    (authApi.login as jest.Mock).mockResolvedValueOnce({
+      token: 'tok', usuario: { id: 'u1', nome: 'Admin', email: 'a@b.com', role: 'admin' },
+    });
+    render(<Login onLogin={onLogin} />);
+    fireEvent.change(emailInput(), { target: { value: 'a@b.com' } });
+    fireEvent.change(senhaInput(), { target: { value: '123' } });
     fireEvent.click(btnEntrar());
-    expect(screen.getByText('Entrando...')).toBeInTheDocument();
-    act(() => { jest.runAllTimers(); });
-    expect(onLogin).toHaveBeenCalledWith(usuarios[0]);
-    jest.useRealTimers();
-  });
-
-  it('login é case-insensitive para o e-mail', () => {
-    jest.useFakeTimers();
-    const onLogin = jest.fn();
-    render(<Login usuarios={usuarios} onLogin={onLogin} />);
-    fireEvent.change(emailInput(), { target: { value: 'ADMIN@TEST.COM' } });
-    fireEvent.change(senhaInput(), { target: { value: 'senha123' } });
-    fireEvent.click(btnEntrar());
-    act(() => { jest.runAllTimers(); });
-    expect(onLogin).toHaveBeenCalledWith(usuarios[0]);
-    jest.useRealTimers();
+    await waitFor(() => expect(onLogin).toHaveBeenCalled());
   });
 });

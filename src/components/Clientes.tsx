@@ -30,8 +30,9 @@ export default function Clientes({ clientes, onSalvar, onDelete }: Props) {
   const abrirEditar = (c: Cliente) => { setForm({ ...c }); setModal(true); };
 
   const salvar = () => {
-    if (!form.nome) return alert('Nome obrigatório');
-    onSalvar({ ...form, id: form.id || uuid() });
+    const nome = form.nome.trim();
+    if (!nome) return alert('Nome obrigatório');
+    onSalvar({ ...form, nome, id: form.id || uuid() });
     setModal(false);
   };
 

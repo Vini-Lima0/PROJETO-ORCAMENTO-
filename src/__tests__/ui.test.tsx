@@ -82,18 +82,18 @@ describe('StatusBadge', () => {
 describe('CurrencyInput', () => {
   it('exibe placeholder quando valor é zero e não focado', () => {
     render(<CurrencyInput value={0} onChange={jest.fn()} />);
-    expect(screen.getByPlaceholderText('R$ 0,00')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('0,00')).toBeInTheDocument();
   });
 
   it('formata valor como moeda quando não focado', () => {
     render(<CurrencyInput value={1500} onChange={jest.fn()} />);
-    expect(screen.getByDisplayValue('R$ 1.500,00')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('1.500,00')).toBeInTheDocument();
   });
 
   it('chama onChange com valor numérico correto', () => {
     const onChange = jest.fn();
     render(<CurrencyInput value={0} onChange={onChange} />);
-    const input = screen.getByPlaceholderText('R$ 0,00');
+    const input = screen.getByPlaceholderText('0,00');
     fireEvent.focus(input);
     fireEvent.change(input, { target: { value: '150000' } });
     expect(onChange).toHaveBeenCalledWith(1500);
