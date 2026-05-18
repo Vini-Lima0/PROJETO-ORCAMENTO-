@@ -1,27 +1,27 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, vendaSchema, vendaUpdateSchema, pagamentoSchema, togglePagamentoSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
 
-router.get('/', async (_req: AuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (_req, res) => {
   const vendas = await prisma.venda.findMany({
     include: { pagamentos: true, ordensServico: { select: { id: true, numero: true, status: true } } },
     orderBy: { criadoEm: 'desc' },
   });
   res.json(vendas);
-});
+}));
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const v = await prisma.venda.findUnique({
     where: { id: req.params.id },
     include: { pagamentos: true, ordensServico: true },
   });
   if (!v) { res.status(404).json({ erro: 'Venda não encontrada' }); return; }
   res.json(v);
-});
+}));
 
 router.post('/', validar(vendaSchema), async (req: AuthRequest, res: Response) => {
   const { orcamentoId, orcamentoNumero, clienteId, clienteNome, contato,

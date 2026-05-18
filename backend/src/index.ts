@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 
@@ -23,15 +25,24 @@ const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 if (!fs.existsSync(path.join(UPLOAD_DIR, 'pdfs'))) fs.mkdirSync(path.join(UPLOAD_DIR, 'pdfs'), { recursive: true });
 
-// CORS: lista branca via ALLOWED_ORIGINS (separada por vírgula). Sem a variável,
-// permite tudo (compatível com dev/single-tenant). Em prod multi-cliente, defina.
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 
+app.use(helmet({ contentSecurityPolicy: false }));
+app.set('trust proxy', 1);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // server-to-server, curl, Postman
-    if (allowedOrigins.length === 0) return cb(null, true); // lista vazia = aberto (dev)
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.length === 0) return cb(null, true);
     if (allowedOrigins.includes(origin)) return cb(null, true);
     cb(new Error(`Origin ${origin} não permitida`));
   },
@@ -40,8 +51,7 @@ app.use(cors({
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rotas
-app.use('/api/auth',           authRoutes);
+app.use('/api/auth',           authLimiter, authRoutes);
 app.use('/api/clientes',       clientesRoutes);
 app.use('/api/produtos',       produtosRoutes);
 app.use('/api/orcamentos',     orcamentosRoutes);
@@ -53,7 +63,6 @@ app.use('/api/pdfs',           pdfsRoutes);
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: new Date().toISOString() }));
 
-// Tratamento de erros (incluindo CORS bloqueado)
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err?.message?.includes('Origin') && err.message.includes('não permitida')) {
     res.status(403).json({ erro: err.message });

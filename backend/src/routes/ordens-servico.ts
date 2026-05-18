@@ -1,12 +1,12 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, osSchema, osUpdateSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
 
-router.get('/', async (req: AuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (req, res) => {
   const { vendaId } = req.query;
   const os = await prisma.ordemServico.findMany({
     where: vendaId ? { vendaId: String(vendaId) } : undefined,
@@ -14,15 +14,15 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     orderBy: { criadoEm: 'desc' },
   });
   res.json(os);
-});
+}));
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const os = await prisma.ordemServico.findUnique({
     where: { id: req.params.id }, include: { itens: true },
   });
   if (!os) { res.status(404).json({ erro: 'OS não encontrada' }); return; }
   res.json(os);
-});
+}));
 
 router.post('/', validar(osSchema), async (req: AuthRequest, res: Response) => {
   const {

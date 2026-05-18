@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import prisma from '../lib/prisma';
-import { autenticar, AuthRequest } from '../middleware/auth';
+import { autenticar, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, pdfBase64Schema } from '../lib/validacao';
 
 const router = Router();
@@ -28,23 +28,22 @@ const upload = multer({
   },
 });
 
-router.get('/', async (req: AuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (req, res) => {
   const { orcamentoId } = req.query;
   const pdfs = await prisma.pdfArquivo.findMany({
     where: orcamentoId ? { orcamentoId: String(orcamentoId) } : undefined,
     orderBy: { criadoEm: 'desc' },
   });
   res.json(pdfs);
-});
+}));
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const pdf = await prisma.pdfArquivo.findUnique({ where: { id: req.params.id } });
   if (!pdf) { res.status(404).json({ erro: 'PDF não encontrado' }); return; }
   res.json(pdf);
-});
+}));
 
-// Download autenticado (substitui o serve estático anterior)
-router.get('/:id/download', async (req: AuthRequest, res: Response) => {
+router.get('/:id/download', asyncHandler(async (req, res) => {
   const pdf = await prisma.pdfArquivo.findUnique({ where: { id: req.params.id } });
   if (!pdf) { res.status(404).json({ erro: 'PDF não encontrado' }); return; }
   const filepath = path.join(uploadDir, pdf.nomeArquivo);
@@ -53,7 +52,7 @@ router.get('/:id/download', async (req: AuthRequest, res: Response) => {
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${safeName}"`);
   fs.createReadStream(filepath).pipe(res);
-});
+}));
 
 router.post('/upload', upload.single('pdf'), async (req: AuthRequest, res: Response) => {
   if (!req.file) { res.status(400).json({ erro: 'Arquivo PDF obrigatório' }); return; }
@@ -78,13 +77,17 @@ router.post('/upload', upload.single('pdf'), async (req: AuthRequest, res: Respo
   res.status(201).json(atualizado);
 });
 
-router.post('/base64', validar(pdfBase64Schema), async (req: AuthRequest, res: Response) => {
+router.post('/base64', validar(pdfBase64Schema), asyncHandler(async (req, res) => {
   const { orcamentoId, orcamentoNumero, versao, base64 } = req.body;
   const buffer = Buffer.from(base64.replace(/^data:application\/pdf;base64,/, ''), 'base64');
   const filename = `${uuidv4()}.pdf`;
   const filepath = path.join(uploadDir, filename);
-  fs.writeFileSync(filepath, buffer);
-
+  try {
+    fs.writeFileSync(filepath, buffer);
+  } catch (e: any) {
+    res.status(500).json({ erro: 'Falha ao salvar arquivo PDF no servidor' });
+    return;
+  }
   const apiUrl = process.env.API_URL || `http://localhost:${process.env.PORT || 3001}`;
   const pdf = await prisma.pdfArquivo.create({
     data: {
@@ -100,7 +103,7 @@ router.post('/base64', validar(pdfBase64Schema), async (req: AuthRequest, res: R
     where: { id: pdf.id }, data: { url: urlFinal },
   });
   res.status(201).json(atualizado);
-});
+}));
 
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
   try {
