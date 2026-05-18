@@ -35,34 +35,43 @@ router.get('/:id', async (req: AuthRequest, res: Response) => {
   res.json(o);
 });
 
+const VALID_STATUS = ['rascunho', 'enviado', 'aguardando', 'aprovado', 'recusado'];
+
 router.post('/', async (req: AuthRequest, res: Response) => {
   const { clienteId, clienteNome, contato, status, itens = [], desconto = 0, impostos = 0,
           observacoes, validade, criadoEm } = req.body;
   if (!clienteId) { res.status(400).json({ erro: 'Cliente obrigatório' }); return; }
 
-  const ultimo = await prisma.orcamento.findFirst({ orderBy: { numero: 'desc' } });
-  const numero = proximoNumero(ultimo?.numero ?? null);
   const { subtotal, total } = calcTotais(itens, desconto, impostos);
 
-  try {
-    const o = await prisma.orcamento.create({
-      data: {
-        numero, clienteId, clienteNome: clienteNome || '', contato: contato || '',
-        status: status || 'rascunho', desconto: Number(desconto), impostos: Number(impostos),
-        observacoes: observacoes || '', validade: validade || '',
-        criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
-        subtotal, total,
-        itens: {
-          create: itens.map((i: any) => ({
-            descricao: i.descricao, quantidade: Number(i.quantidade),
-            valorUnitario: Number(i.valorUnitario), periodo: i.periodo || null,
-          })),
+  for (let tentativa = 0; tentativa < 5; tentativa++) {
+    const ultimo = await prisma.orcamento.findFirst({ orderBy: { numero: 'desc' } });
+    const numero = proximoNumero(ultimo?.numero ?? null);
+    try {
+      const o = await prisma.orcamento.create({
+        data: {
+          numero, clienteId, clienteNome: clienteNome || '', contato: contato || '',
+          status: status || 'rascunho', desconto: Number(desconto), impostos: Number(impostos),
+          observacoes: observacoes || '', validade: validade || '',
+          criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
+          subtotal, total,
+          itens: {
+            create: itens.map((i: any) => ({
+              descricao: i.descricao, quantidade: Number(i.quantidade),
+              valorUnitario: Number(i.valorUnitario), periodo: i.periodo || null,
+            })),
+          },
         },
-      },
-      include: { itens: true },
-    });
-    res.status(201).json(o);
-  } catch (e: any) { res.status(500).json({ erro: e.message || 'Erro ao criar orçamento' }); }
+        include: { itens: true },
+      });
+      res.status(201).json(o);
+      return;
+    } catch (e: any) {
+      if (e.code === 'P2002' && tentativa < 4) continue;
+      res.status(500).json({ erro: e.message || 'Erro ao criar orçamento' });
+      return;
+    }
+  }
 });
 
 router.put('/:id', async (req: AuthRequest, res: Response) => {
@@ -95,6 +104,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 router.patch('/:id/status', async (req: AuthRequest, res: Response) => {
   const { status } = req.body;
   if (!status) { res.status(400).json({ erro: 'Status obrigatório' }); return; }
+  if (!VALID_STATUS.includes(status)) { res.status(400).json({ erro: `Status inválido. Use: ${VALID_STATUS.join(', ')}` }); return; }
   try {
     const o = await prisma.orcamento.update({
       where: { id: req.params.id }, data: { status }, include: { itens: true },

@@ -26,44 +26,29 @@ router.post('/', async (req: AuthRequest, res: Response) => {
   const { orcamentoId, orcamentoNumero, clienteId, clienteNome, contato,
           desconto, impostos, subtotal, total, observacoes, criadoEm } = req.body;
 
-  const ultimo = await prisma.venda.findFirst({ orderBy: { numero: 'desc' } });
-  const n = ultimo ? parseInt(ultimo.numero.replace('VND-', ''), 10) + 1 : 1;
-  const numero = `VND-${String(n).padStart(4, '0')}`;
-
-  const v = await prisma.venda.create({
-    data: {
-      numero, orcamentoId, orcamentoNumero, clienteId, clienteNome, contato: contato || '',
-      desconto: Number(desconto) || 0, impostos: Number(impostos) || 0,
-      subtotal: Number(subtotal) || 0, total: Number(total) || 0,
-      observacoes: observacoes || '', criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
-      situacao: 'pendente',
-    },
-    include: { pagamentos: true },
-  });
-  res.status(201).json(v);
-});
-
-router.put('/:id', async (req: AuthRequest, res: Response) => {
-  const { contato, observacoes, pagamentos = [], situacao } = req.body;
-  try {
-    await prisma.pagamentoVenda.deleteMany({ where: { vendaId: req.params.id } });
-    const v = await prisma.venda.update({
-      where: { id: req.params.id },
-      data: {
-        contato: contato ?? undefined,
-        observacoes: observacoes ?? undefined,
-        situacao: situacao ?? undefined,
-        pagamentos: {
-          create: pagamentos.map((p: any) => ({
-            descricao: p.descricao || '', valor: Number(p.valor) || 0,
-            vencimento: p.vencimento || '', pago: p.pago === true,
-          })),
+  for (let tentativa = 0; tentativa < 5; tentativa++) {
+    const ultimo = await prisma.venda.findFirst({ orderBy: { numero: 'desc' } });
+    const n = ultimo ? parseInt(ultimo.numero.replace('VND-', ''), 10) + 1 : 1;
+    const numero = `VND-${String(n).padStart(4, '0')}`;
+    try {
+      const v = await prisma.venda.create({
+        data: {
+          numero, orcamentoId, orcamentoNumero, clienteId, clienteNome, contato: contato || '',
+          desconto: Number(desconto) || 0, impostos: Number(impostos) || 0,
+          subtotal: Number(subtotal) || 0, total: Number(total) || 0,
+          observacoes: observacoes || '', criadoEm: criadoEm || new Date().toISOString().slice(0, 10),
+          situacao: 'pendente',
         },
-      },
-      include: { pagamentos: true },
-    });
-    res.json(v);
-  } catch { res.status(404).json({ erro: 'Venda não encontrada' }); }
+        include: { pagamentos: true },
+      });
+      res.status(201).json(v);
+      return;
+    } catch (e: any) {
+      if (e.code === 'P2002' && tentativa < 4) continue;
+      res.status(500).json({ erro: e.message || 'Erro ao criar venda' });
+      return;
+    }
+  }
 });
 
 router.post('/:id/pagamentos', async (req: AuthRequest, res: Response) => {
@@ -102,6 +87,29 @@ router.patch('/pagamentos/:pgId', async (req: AuthRequest, res: Response) => {
     await prisma.venda.update({ where: { id: pg.vendaId }, data: { situacao } });
   }
   res.json(pg);
+});
+
+router.put('/:id', async (req: AuthRequest, res: Response) => {
+  const { contato, observacoes, pagamentos = [], situacao } = req.body;
+  try {
+    await prisma.pagamentoVenda.deleteMany({ where: { vendaId: req.params.id } });
+    const v = await prisma.venda.update({
+      where: { id: req.params.id },
+      data: {
+        contato: contato ?? undefined,
+        observacoes: observacoes ?? undefined,
+        situacao: situacao ?? undefined,
+        pagamentos: {
+          create: pagamentos.map((p: any) => ({
+            descricao: p.descricao || '', valor: Number(p.valor) || 0,
+            vencimento: p.vencimento || '', pago: p.pago === true,
+          })),
+        },
+      },
+      include: { pagamentos: true },
+    });
+    res.json(v);
+  } catch { res.status(404).json({ erro: 'Venda não encontrada' }); }
 });
 
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
