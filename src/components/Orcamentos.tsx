@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Orcamento, OrcamentoStatus, Cliente } from '../types';
 import { StatusBadge, fmtMoeda } from './ui';
 import { gerarPDF } from '../pdfGenerator';
+import { loadConfig } from './Configuracoes';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -165,7 +166,7 @@ export default function Orcamentos({ orcamentos, clientes, onNovo, onEditar, onD
                       <StatusBadge status={o.status} />
                     </td>
                     <td style={{ padding:'12px 16px' }}>
-                      <button onClick={()=>gerarPDF(o, undefined, clientes.find(c=>c.id===o.clienteId))}
+                      <button onClick={()=>gerarPDF(o, loadConfig(), clientes.find(c=>c.id===o.clienteId))}
                         title="Gerar PDF"
                         style={{ width:32,height:32,borderRadius:8,border:'1px solid var(--border)',background:'none',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',color:'var(--text2)' }}>
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
