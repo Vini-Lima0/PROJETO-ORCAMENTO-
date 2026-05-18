@@ -146,7 +146,7 @@ export const usuarioCreateSchema = z.object({
   nome: z.string().trim().min(1, 'Nome obrigatório').max(200),
   email: z.string().email('E-mail inválido').toLowerCase(),
   senha: z.string().min(4, 'Senha deve ter ao menos 4 caracteres').max(100),
-  role: z.enum(['admin', 'operacional']).default('operador'),
+  role: z.enum(['admin', 'operacional']).default('operacional'),
 });
 
 export const usuarioUpdateSchema = z.object({

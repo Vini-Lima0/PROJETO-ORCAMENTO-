@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, orcamentoSchema, orcamentoStatusSchema } from '../lib/validacao';
 
 const router = Router();
@@ -19,22 +19,22 @@ function proximoNumero(atual: string | null) {
   return `ORÇ-${String(n + 1).padStart(4, '0')}`;
 }
 
-router.get('/', async (_req: AuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (_req, res) => {
   const orcamentos = await prisma.orcamento.findMany({
     include: { itens: true },
     orderBy: { criadoEm: 'desc' },
   });
   res.json(orcamentos);
-});
+}));
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const o = await prisma.orcamento.findUnique({
     where: { id: req.params.id },
     include: { itens: true, pdfs: true },
   });
   if (!o) { res.status(404).json({ erro: 'Orçamento não encontrado' }); return; }
   res.json(o);
-});
+}));
 
 router.post('/', validar(orcamentoSchema), async (req: AuthRequest, res: Response) => {
   const { clienteId, clienteNome, contato, status, itens, desconto, impostos,

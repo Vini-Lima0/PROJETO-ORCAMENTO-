@@ -1,21 +1,21 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, produtoSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
 
-router.get('/', async (_req: AuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (_req, res) => {
   const produtos = await prisma.produto.findMany({ orderBy: { nome: 'asc' } });
   res.json(produtos);
-});
+}));
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const p = await prisma.produto.findUnique({ where: { id: req.params.id } });
   if (!p) { res.status(404).json({ erro: 'Produto não encontrado' }); return; }
   res.json(p);
-});
+}));
 
 router.post('/', validar(produtoSchema), async (req: AuthRequest, res: Response) => {
   const { nome, categoria, preco, unidade, estoque, tipo, ativo } = req.body;

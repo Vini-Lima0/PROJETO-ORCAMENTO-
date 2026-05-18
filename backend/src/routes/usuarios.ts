@@ -1,29 +1,29 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../lib/prisma';
-import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, usuarioCreateSchema, usuarioUpdateSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
 router.use(apenasAdmin);
 
-router.get('/', async (_req: AuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (_req, res) => {
   const usuarios = await prisma.usuario.findMany({
     select: { id: true, nome: true, email: true, role: true, ativo: true, criadoEm: true },
     orderBy: { nome: 'asc' },
   });
   res.json(usuarios);
-});
+}));
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const u = await prisma.usuario.findUnique({
     where: { id: req.params.id },
     select: { id: true, nome: true, email: true, role: true, ativo: true, criadoEm: true },
   });
   if (!u) { res.status(404).json({ erro: 'Usuário não encontrado' }); return; }
   res.json(u);
-});
+}));
 
 router.post('/', validar(usuarioCreateSchema), async (req: AuthRequest, res: Response) => {
   const { nome, email, senha, role } = req.body;

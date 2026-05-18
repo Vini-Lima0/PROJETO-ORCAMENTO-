@@ -12,7 +12,7 @@ model Usuario {
   nome      String
   email     String  @unique
   senha     String
-  role      String  @default("operador")
+  role      String  @default("operacional")
   ativo     Boolean @default(true)
   criadoEm String
 
@@ -127,7 +127,7 @@ model OrdemServico {
   venda                   Venda?  @relation(fields: [vendaId], references: [id])
   vendaNumero             String
   orcamentoNumero         String
-  clienteId               String
+  clienteId               String?
   clienteNome             String
   contato                 String
   enderecoEvento          String

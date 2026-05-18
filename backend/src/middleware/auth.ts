@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 import jwt from 'jsonwebtoken';
 import JWT_SECRET from '../lib/jwt';
 
@@ -30,4 +30,9 @@ export function apenasAdmin(req: AuthRequest, res: Response, next: NextFunction)
     return;
   }
   next();
+}
+
+// Wrapper para capturar erros de handlers async e encaminhar ao error handler global
+export function asyncHandler(fn: (req: AuthRequest, res: Response, next: NextFunction) => Promise<any>): RequestHandler {
+  return (req, res, next) => fn(req as AuthRequest, res, next).catch(next);
 }

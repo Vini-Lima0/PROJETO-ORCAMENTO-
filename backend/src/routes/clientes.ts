@@ -1,21 +1,21 @@
 import { Router, Response } from 'express';
 import prisma from '../lib/prisma';
-import { autenticar, apenasAdmin, AuthRequest } from '../middleware/auth';
+import { autenticar, apenasAdmin, asyncHandler, AuthRequest } from '../middleware/auth';
 import { validar, clienteSchema } from '../lib/validacao';
 
 const router = Router();
 router.use(autenticar);
 
-router.get('/', async (_req: AuthRequest, res: Response) => {
+router.get('/', asyncHandler(async (_req, res) => {
   const clientes = await prisma.cliente.findMany({ orderBy: { nome: 'asc' } });
   res.json(clientes);
-});
+}));
 
-router.get('/:id', async (req: AuthRequest, res: Response) => {
+router.get('/:id', asyncHandler(async (req, res) => {
   const c = await prisma.cliente.findUnique({ where: { id: req.params.id } });
   if (!c) { res.status(404).json({ erro: 'Cliente não encontrado' }); return; }
   res.json(c);
-});
+}));
 
 router.post('/', validar(clienteSchema), async (req: AuthRequest, res: Response) => {
   const { id, nome, email, telefone, empresa, cnpj, cpf, endereco, criadoEm } = req.body;
