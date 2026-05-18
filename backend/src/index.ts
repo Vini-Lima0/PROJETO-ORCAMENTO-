@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 
@@ -37,16 +36,6 @@ app.use(helmet({
   crossOriginOpenerPolicy: false,
   crossOriginEmbedderPolicy: false,
 }));
-app.set('trust proxy', 1);
-
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  message: { erro: 'Muitas tentativas de login. Tente novamente em 15 minutos.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true); // server-to-server, curl, Postman
@@ -60,7 +49,7 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Rotas
-app.use('/api/auth',           authLimiter, authRoutes);
+app.use('/api/auth',           authRoutes);
 app.use('/api/clientes',       clientesRoutes);
 app.use('/api/produtos',       produtosRoutes);
 app.use('/api/orcamentos',     orcamentosRoutes);
