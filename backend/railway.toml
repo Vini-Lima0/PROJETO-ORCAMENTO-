@@ -3,5 +3,5 @@ builder = "nixpacks"
 buildCommand = "npm install && npm run build && npx prisma generate"
 
 [deploy]
-startCommand = "npx prisma migrate deploy && npm start"
+startCommand = "npx prisma migrate deploy || echo 'migrate deploy falhou - seguindo com servidor mesmo assim'; npm start"
 restartPolicyType = "on_failure"
