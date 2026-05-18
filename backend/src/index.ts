@@ -30,7 +30,13 @@ if (!fs.existsSync(path.join(UPLOAD_DIR, 'pdfs'))) fs.mkdirSync(path.join(UPLOAD
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',').map(s => s.trim()).filter(Boolean);
 
-app.use(helmet({ contentSecurityPolicy: false }));
+// Helmet: desabilita headers que bloqueiam requisições cross-origin (API pública com CORS próprio)
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 app.set('trust proxy', 1);
 
 const authLimiter = rateLimit({
